@@ -43,6 +43,11 @@ jobs:
       inlineScript: |
         set -euo pipefail
         
+        # Optimize: Enable Terraform Plugin Cache
+        export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
+        mkdir -p "$TF_PLUGIN_CACHE_DIR"
+        echo "Terraform Plugin Cache enabled at: $TF_PLUGIN_CACHE_DIR"
+        
         # Install AWS CLI (Required because the agent environment lacks it, causing 'aws: command not found' errors)
         if ! command -v aws &> /dev/null; then
             echo "Installing AWS CLI..."
