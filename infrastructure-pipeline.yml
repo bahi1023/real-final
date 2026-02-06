@@ -62,8 +62,8 @@ jobs:
         cd "$(TF_DIR)"
         
         # ATTEMPT FORCE UNLOCK (Safeguard)
-        echo "Attempting to force unlock state..."
-        terraform force-unlock -force 41887957-f2da-c5b7-7b04-a1e1dd1c79c9 || echo "Unlock failed or not needed"
+        echo "Attempting to force unlock state... (Skipped: Hardcoded ID removed)"
+        # terraform force-unlock -force 41887957-f2da-c5b7-7b04-a1e1dd1c79c9
 
         if [ "${{ parameters.destroy }}" = "True" ]; then
           echo "Running Pre-Destroy Cleanup (AWS CLI Method)..."

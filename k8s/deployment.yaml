@@ -21,6 +21,9 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongo:27017/realfinal" # Placeholder: Update with actual URI
 
 ---
 apiVersion: v1
