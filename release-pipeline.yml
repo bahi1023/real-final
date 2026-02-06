@@ -12,7 +12,7 @@ trigger:
 pr: none
 
 variables:
-  AWS_SERVICE_CONNECTION: 'bahi-aws'
+  AWS_SERVICE_CONNECTION: 'bahi-aws-v2'
   AWS_REGION: 'us-east-1'
   IMAGE_REPOSITORY: '20107946/realfinal'
   # OPTIMIZATION: Set this variable in Azure DevOps Library to avoid running Terraform to find it.

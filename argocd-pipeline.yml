@@ -4,7 +4,7 @@ trigger:
 pr: none
 
 variables:
-  AWS_SERVICE_CONNECTION: 'bahi-aws'
+  AWS_SERVICE_CONNECTION: 'bahi-aws-v2'
   AWS_REGION: 'us-east-1'
   # OPTIMIZATION: We assume CLUSTER_NAME is provided as a pipeline variable
   CLUSTER_NAME: 'eks-platform-nonprod-v2-cluster'

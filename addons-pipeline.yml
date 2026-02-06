@@ -13,7 +13,7 @@ parameters:
 variables:
   TF_DIR: '.' 
   TF_VAR_FILE: '${{ parameters.env }}.tfvars'
-  AWS_SERVICE_CONNECTION: 'bahi-aws'
+  AWS_SERVICE_CONNECTION: 'bahi-aws-v2'
   AWS_REGION: 'us-east-1'
 
 #pool:
