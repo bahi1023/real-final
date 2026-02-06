@@ -1,0 +1,181 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)-Addons
+trigger:
+  - main
+pr: none
+
+parameters:
+  - name: env
+    displayName: Environment
+    type: string
+    default: nonprod
+    values: [nonprod, prod]
+
+variables:
+  TF_DIR: '.' 
+  TF_VAR_FILE: '${{ parameters.env }}.tfvars'
+  AWS_SERVICE_CONNECTION: 'bahi-aws'
+  AWS_REGION: 'us-east-1'
+
+#pool:
+ # vmImage: ubuntu-latest
+ 
+pool:
+  name: queue-bebo_mohammed
+
+jobs:
+- job: Addons
+  displayName: 'Addons Deployment (Helm, Vault, Argo, Sonar, Nginx)'
+  timeoutInMinutes: 120
+  steps:
+  - checkout: self
+
+  - task: TerraformInstaller@1
+    displayName: Install Terraform
+    inputs:
+      terraformVersion: latest
+
+  - task: AWSShellScript@1
+    displayName: Terraform init
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        cd "$(TF_DIR)"
+        terraform init
+
+  - task: AWSShellScript@1
+    displayName: Configure kubeconfig
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        cd "$(TF_DIR)"
+        CLUSTER_NAME="$(terraform output -raw cluster_name)"
+        aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
+
+  # 2. Install Helm
+  - task: HelmInstaller@1
+    displayName: Install Helm
+    inputs:
+      helmVersionToInstall: 'latest'
+
+  # 3. Install Nginx Ingress
+  - task: AWSShellScript@1
+    displayName: Install Nginx Ingress
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        echo "Installing Nginx Ingress Controller..."
+        helm upgrade --install ingress-nginx ingress-nginx \
+          --repo https://kubernetes.github.io/ingress-nginx \
+          --namespace ingress-nginx --create-namespace \
+          --set controller.service.type=LoadBalancer \
+          --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb" \
+          --atomic \
+          --wait
+
+  # 4. Fetch LB DNS and Update Terraform (Link APIGW)
+  - task: AWSShellScript@1
+    displayName: Link API Gateway to Load Balancer
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        cd "$(TF_DIR)"
+        
+        echo "Fetching Load Balancer DNS..."
+        NLB_DNS=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        echo "Found LB: $NLB_DNS"
+        
+        echo "Updating var.tf..."
+        sed -i "s|http://example.com|http://$NLB_DNS|g" var.tf
+        
+        echo "Running Terraform Apply (Pass 2)..."
+        terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"
+
+  # 5. Export Credentials
+  - task: AWSShellScript@1
+    displayName: 'Export AWS Credentials'
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        echo "##vso[task.setvariable variable=AWS_ACCESS_KEY_ID;isSecret=true]$AWS_ACCESS_KEY_ID"
+        echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;isSecret=true]$AWS_SECRET_ACCESS_KEY"
+        echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;isSecret=true]$AWS_SESSION_TOKEN"
+
+  # 6. Install Vault
+  
+  # FIX: Conflicting Webhook from previous installs causes upgrade failure. Force cleanup.
+  - task: AWSShellScript@1
+    displayName: Cleanup Vault Webhooks
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        echo "Cleaning up conflicting Vault webhooks..."
+        kubectl delete MutatingWebhookConfiguration vault-agent-injector-cfg --ignore-not-found=true
+
+  - task: HelmDeploy@0
+    displayName: Install Vault
+    inputs:
+      connectionType: None
+      command: upgrade
+      chartType: Name
+      chartName: vault
+      releaseName: vault
+      namespace: vault
+      install: true
+      arguments: '--repo https://helm.releases.hashicorp.com --create-namespace --wait --atomic --timeout 5m --set server.ingress.enabled=true --set server.ingress.ingressClassName=nginx --set server.ingress.hosts[0].host="" --set "server.ingress.hosts[0].paths[0].path=/vault"'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
+      AWS_REGION: $(AWS_REGION)
+
+  # 7. Install Argo CD
+  - task: HelmDeploy@0
+    displayName: Install Argo CD
+    inputs:
+      connectionType: None
+      command: upgrade
+      chartType: Name
+      chartName: argo-cd
+      releaseName: argocd
+      namespace: argocd
+      install: true
+      arguments: '--repo https://argoproj.github.io/argo-helm --create-namespace --wait --atomic --timeout 5m --set server.ingress.enabled=true --set server.ingress.ingressClassName=nginx --set "server.ingress.paths[0]=/argoCD" --set "server.extraArgs={--insecure,--rootpath=/argoCD}"'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
+      AWS_REGION: $(AWS_REGION)
+
+  # 8. Install SonarQube
+  - task: HelmDeploy@0
+    displayName: Install SonarQube
+    inputs:
+      connectionType: None
+      command: upgrade
+      chartType: Name
+      chartName: sonarqube
+      releaseName: sonarqube
+      namespace: sonarqube
+      install: true
+      arguments: '--repo https://SonarSource.github.io/helm-chart-sonarqube --create-namespace --wait --atomic --timeout 10m --set monitoringPasscode=changeMe --set community.enabled=true --set edition= --set ingress.enabled=true --set ingress.ingressClassName=nginx --set ingress.hosts[0].name="" --set ingress.hosts[0].path=/sonarqube --set "sonarProperties.sonar\.web\.context=/sonarqube"'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
+      AWS_REGION: $(AWS_REGION)
