@@ -286,6 +286,7 @@ jobs:
       install: true
       arguments: >
         --repo https://helm.releases.hashicorp.com --create-namespace --wait --rollback-on-failure --timeout 5m
+        --set server.service.type=ClusterIP
         # <--- THIS SECTION LINKS VAULT TO THE LOAD BALANCER
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
@@ -315,6 +316,7 @@ jobs:
       install: true
       arguments: >
         --repo https://argoproj.github.io/argo-helm --create-namespace --wait --rollback-on-failure --timeout 5m
+        --set server.service.type=ClusterIP
         # <--- THIS SECTION LINKS ARGOCD TO THE LOAD BALANCER
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
@@ -347,6 +349,7 @@ jobs:
         --set monitoringPasscode=changeMe
         --set community.enabled=true
         --set edition=
+        --set service.type=ClusterIP
         # <--- THIS SECTION LINKS SONARQUBE TO THE LOAD BALANCER
         --set ingress.enabled=true
         --set ingress.ingressClassName=nginx
