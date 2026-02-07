@@ -15,11 +15,11 @@ variables:
   AWS_SERVICE_CONNECTION: 'bahi-aws-v2'
   AWS_REGION: 'us-east-1'
 
-pool:
-  vmImage: ubuntu-latest
+# pool:
+#   vmImage: ubuntu-latest
  
-#pool:
- # name: queue-bebo_mohammed
+pool:
+ name: queue-bebo_mohammed
 
 jobs:
 - job: Addons
