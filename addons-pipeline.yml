@@ -168,10 +168,33 @@ jobs:
           terraform output
           exit 1
         fi
-  
+        
         echo "Refreshing kubeconfig for $CLUSTER_NAME..."
         aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
-  
+        
+        # FIX: Persist AWS Credentials to disk for HelmDeploy
+        # HelmDeploy task environment often strips AWS_* env vars from the aws-iam-authenticator.
+        # Writing them to ~/.aws/credentials ensures the aws CLI always finds them.
+        mkdir -p ~/.aws
+        echo "Writing AWS credentials to ~/.aws/credentials..."
+        
+        cat > ~/.aws/credentials <<EOF
+        [default]
+        aws_access_key_id=$AWS_ACCESS_KEY_ID
+        aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
+        EOF
+        
+        if [ -n "${AWS_SESSION_TOKEN:-}" ]; then
+          echo "aws_session_token=$AWS_SESSION_TOKEN" >> ~/.aws/credentials
+        fi
+        
+        cat > ~/.aws/config <<EOF
+        [default]
+        region=$(AWS_REGION)
+        EOF
+        
+        chmod 600 ~/.aws/credentials
+        
         # Patch kubeconfig to use absolute aws path
         AWS_BIN=$(which aws)
         echo "Patching kubeconfig to use: $AWS_BIN"
