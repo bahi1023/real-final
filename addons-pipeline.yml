@@ -376,15 +376,27 @@ jobs:
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
         echo "Installing SonarQube..."
+        
+        # Create values.yaml to avoid quoting issues with --set
+        cat > sonarqube-values.yaml <<EOF
+        monitoringPasscode: changeMe
+        community:
+          enabled: true
+        service:
+          type: ClusterIP
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+          hosts:
+            - name: ""
+              path: "/sonarqube"
+          annotations:
+             nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+        sonarWebContext: /sonarqube
+        EOF
+
         helm upgrade --install sonarqube sonarqube \
           --repo https://SonarSource.github.io/helm-chart-sonarqube \
           --namespace sonarqube --create-namespace \
           --wait --timeout 10m \
-          --set monitoringPasscode=changeMe \
-          --set community.enabled=true \
-          --set service.type=ClusterIP \
-          --set ingress.enabled=true \
-          --set ingress.ingressClassName=nginx \
-          --set ingress.hosts[0].name="" \
-          --set ingress.hosts[0].path=/sonarqube \
-          --set sonarWebContext=/sonarqube
+          -f sonarqube-values.yaml
