@@ -112,7 +112,7 @@ jobs:
         echo "Found LB: $NLB_DNS"
         
         echo "Updating var.tf..."
-        sed -i "s|http://example.com|http://$NLB_DNS|g" var.tf
+        sed -i "s|https://example.com|https://$NLB_DNS|g" var.tf
         
         echo "Running Terraform Apply (Pass 2)..."
         terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"

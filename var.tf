@@ -38,7 +38,7 @@ variable "environment" {
 variable "nlb_dns_name" {
   description = "The DNS name of the Network Load Balancer created by Ingress Controller"
   type        = string
-  default     = "http://example.com"
+  default     = "https://example.com"
 }
 
 # Added for IRSA
