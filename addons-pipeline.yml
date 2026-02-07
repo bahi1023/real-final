@@ -25,7 +25,7 @@ pool:
 jobs:
 - job: Addons
   displayName: 'Addons Deployment (Helm, Vault, Argo, Sonar, Nginx)'
-  timeoutInMinutes: 120
+  timeoutInMinutes: 20
   steps:
   - checkout: self
 
@@ -87,6 +87,7 @@ jobs:
       scriptType: inline
       inlineScript: |
         set -euo pipefail
+        # <--- THIS INSTALLS THE NGINX CONTROLLER WHICH CREATES THE AWS LOAD BALANCER (NLB)
         echo "Installing Nginx Ingress Controller..."
         helm upgrade --install ingress-nginx ingress-nginx \
           --repo https://kubernetes.github.io/ingress-nginx \
@@ -247,6 +248,7 @@ jobs:
           --set extraArgs.email-domain="gmail.com" \
           --set extraArgs.upstream="file:///dev/null" \
           --set extraArgs.http-address="0.0.0.0:4180" \
+          # <--- THIS SECTION LINKS THE APP TO THE LOAD BALANCER (via Ingress Class "nginx")
           --set ingress.enabled=true \
           --set ingress.className="nginx" \
           --set ingress.path="/oauth2" \
@@ -282,6 +284,7 @@ jobs:
       install: true
       arguments: >
         --repo https://helm.releases.hashicorp.com --create-namespace --wait --rollback-on-failure --timeout 5m
+        # <--- THIS SECTION LINKS VAULT TO THE LOAD BALANCER
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
         --set server.ingress.hosts[0].host=""
@@ -308,6 +311,7 @@ jobs:
       install: true
       arguments: >
         --repo https://argoproj.github.io/argo-helm --create-namespace --wait --rollback-on-failure --timeout 5m
+        # <--- THIS SECTION LINKS ARGOCD TO THE LOAD BALANCER
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
         --set "server.ingress.paths[0]=/argoCD"
@@ -337,6 +341,7 @@ jobs:
         --set monitoringPasscode=changeMe
         --set community.enabled=true
         --set edition=
+        # <--- THIS SECTION LINKS SONARQUBE TO THE LOAD BALANCER
         --set ingress.enabled=true
         --set ingress.ingressClassName=nginx
         --set ingress.hosts[0].name=""
