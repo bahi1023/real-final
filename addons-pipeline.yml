@@ -117,7 +117,6 @@ jobs:
         echo "Running Terraform Apply (Pass 2)..."
         terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"
 
-
   # 5. Export Credentials and Terraform Outputs
   - task: AWSShellScript@1
     displayName: 'Export AWS Credentials & Terraform Outputs'
@@ -126,55 +125,68 @@ jobs:
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
-        set -euo pipefail
+        set -e
+  
         cd "$(TF_DIR)"
-        
-        # Export AWS Creds
+  
+        echo "Exporting AWS credentials to pipeline variables..."
+  
+        # Export AWS credentials to pipeline variables
         echo "##vso[task.setvariable variable=AWS_ACCESS_KEY_ID;isSecret=true]$AWS_ACCESS_KEY_ID"
         echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;isSecret=true]$AWS_SECRET_ACCESS_KEY"
+  
         if [ -n "${AWS_SESSION_TOKEN:-}" ]; then
           echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;isSecret=true]$AWS_SESSION_TOKEN"
         fi
-        
-        # Capture Terraform Outputs for OAuth2-Proxy
-        COGNITO_CLIENT_ID=$(terraform output -raw cognito_client_id)
-        COGNITO_CLIENT_SECRET=$(terraform output -raw cognito_client_secret)
-        COGNITO_ISSUER_URL=$(terraform output -raw cognito_issuer_url)
-        NLB_DNS=$(terraform output -raw nlb_dns_name | sed 's|http://||g') # Strip http:// if present in output or var
-        # Note: var.nlb_dns_name has http:// prefix, but let's be safe. 
-        # Actually, let's just get it from kubectl again to be sure or trust the previous step.
-        # Let's trust the previous step which updated var.tf
-        
-        # Generate Cookie Secret
-        COOKIE_SECRET=$(openssl rand -base64 32 | head -c 32 | base64)
-
+  
+        echo "Reading Terraform outputs..."
+  
+        # Safely read Terraform outputs
+        COGNITO_CLIENT_ID=$(terraform output -raw cognito_client_id || echo "")
+        COGNITO_CLIENT_SECRET=$(terraform output -raw cognito_client_secret || echo "")
+        COGNITO_ISSUER_URL=$(terraform output -raw cognito_issuer_url || echo "")
+        CLUSTER_NAME=$(terraform output -raw cluster_name || echo "")
+  
+        if [ -z "$COGNITO_CLIENT_ID" ] || [ -z "$COGNITO_CLIENT_SECRET" ]; then
+          echo "##[error]Failed to read Cognito outputs from Terraform"
+          terraform output
+          exit 1
+        fi
+  
+        # Generate proper cookie secret
+        COOKIE_SECRET=$(openssl rand -base64 32)
+  
+        # Set pipeline variables
         echo "##vso[task.setvariable variable=COGNITO_CLIENT_ID;isSecret=true]$COGNITO_CLIENT_ID"
         echo "##vso[task.setvariable variable=COGNITO_CLIENT_SECRET;isSecret=true]$COGNITO_CLIENT_SECRET"
         echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
         echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
-        
-        # Refresh Kubeconfig with new credentials
-        CLUSTER_NAME=$(terraform output -raw cluster_name || echo "")
+  
+        # Refresh kubeconfig
         if [ -z "$CLUSTER_NAME" ]; then
-             echo "##[error]Could not get cluster_name from Terraform output!"
-             terraform output
-        else 
-             echo "Refeshing kubeconfig for $CLUSTER_NAME..."
-             aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
-             
-             # FIX: Force absolute path for aws binary in kubeconfig
-             # This ensures HelmDeploy task (which might sanitize PATH) can find the authenticator.
-             AWS_BIN=$(which aws)
-             echo "Patching kubeconfig to use: $AWS_BIN"
-             sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config
+          echo "##[error]Could not get cluster_name from Terraform output!"
+          terraform output
+          exit 1
         fi
+  
+        echo "Refreshing kubeconfig for $CLUSTER_NAME..."
+        aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
+  
+        # Patch kubeconfig to use absolute aws path
+        AWS_BIN=$(which aws)
+        echo "Patching kubeconfig to use: $AWS_BIN"
+        sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
-        # Verify AWS CLI and Kubeconfig
+        # Export KUBECONFIG for subsequent tasks
+        echo "##vso[task.setvariable variable=KUBECONFIG]$HOME/.kube/config"
+  
+        # Verify tools
         echo "AWS CLI Version:"
         aws --version
-        echo "Kubeconfig content (sanitized):"
+  
+        echo "Kubeconfig (sanitized):"
         grep -v "data" ~/.kube/config || true
-
+  
   # 6. Install OAuth2-Proxy
   - task: HelmDeploy@0
     displayName: Install OAuth2-Proxy
@@ -202,6 +214,7 @@ jobs:
         --set ingress.path=/oauth2
         --set ingress.hosts[0]=""
     env:
+      KUBECONFIG: $(KUBECONFIG)
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
       AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
@@ -239,6 +252,7 @@ jobs:
         --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
         --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
+      KUBECONFIG: $(KUBECONFIG)
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
       AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
@@ -264,6 +278,7 @@ jobs:
         --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
         --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
+      KUBECONFIG: $(KUBECONFIG)
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
       AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
@@ -293,6 +308,7 @@ jobs:
         --set "ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
         --set "ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
+      KUBECONFIG: $(KUBECONFIG)
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
       AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
