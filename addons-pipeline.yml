@@ -237,6 +237,11 @@ jobs:
           --set ingress.className="nginx" \
           --set ingress.path="/oauth2" \
           --set ingress.hosts[0]=""
+    env:
+      COGNITO_CLIENT_ID: $(COGNITO_CLIENT_ID)
+      COGNITO_CLIENT_SECRET: $(COGNITO_CLIENT_SECRET)
+      COGNITO_ISSUER_URL: $(COGNITO_ISSUER_URL)
+      COOKIE_SECRET: $(COOKIE_SECRET)
 
   # 7. Install Vault
   
