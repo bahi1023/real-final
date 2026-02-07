@@ -54,7 +54,7 @@ jobs:
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip -q awscliv2.zip
             sudo ./aws/install || ./aws/install -i ~/aws-cli -b ~/bin
-            export PATH=~/bin:$PATH
+            echo "##vso[task.prependpath]$HOME/bin"
         fi
         
         cd "$(TF_DIR)"
@@ -153,10 +153,14 @@ jobs:
         echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
         echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
         
-        # Refresh Kubeconfig with new credentials
-        CLUSTER_NAME="$(terraform output -raw cluster_name)"
         echo "Refeshing kubeconfig for $CLUSTER_NAME..."
         aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
+        
+        # Verify AWS CLI and Kubeconfig
+        echo "AWS CLI Version:"
+        aws --version
+        echo "Kubeconfig content (sanitized):"
+        grep -v "data" ~/.kube/config || true
 
   # 6. Install OAuth2-Proxy
   - task: HelmDeploy@0
