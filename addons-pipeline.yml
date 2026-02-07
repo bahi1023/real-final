@@ -382,10 +382,9 @@ jobs:
           --wait --timeout 10m \
           --set monitoringPasscode=changeMe \
           --set community.enabled=true \
-          --set edition= \
           --set service.type=ClusterIP \
           --set ingress.enabled=true \
           --set ingress.ingressClassName=nginx \
           --set ingress.hosts[0].name="" \
           --set ingress.hosts[0].path=/sonarqube \
-          --set "sonarProperties.sonar\.web\.context=/sonarqube"
+          --set sonarWebContext=/sonarqube
