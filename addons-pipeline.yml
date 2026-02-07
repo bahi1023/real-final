@@ -296,6 +296,10 @@ jobs:
       scriptType: inline
       inlineScript: |
         set -euo pipefail
+        
+        echo "Updating Kubeconfig..."
+        aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region $(AWS_REGION)
+
         echo "Installing Vault..."
         helm upgrade --install vault vault \
           --repo https://helm.releases.hashicorp.com \
@@ -306,14 +310,6 @@ jobs:
           --set server.ingress.ingressClassName=nginx \
           --set server.ingress.hosts[0].host="" \
           --set "server.ingress.hosts[0].paths[0].path=/vault"
-    env:
-      AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
-      AWS_CONFIG_FILE: $(HOME)/.aws/config
-      KUBECONFIG: $(KUBECONFIG)
-      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
-      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
-      AWS_REGION: $(AWS_REGION)
 
   # 8. Install Argo CD
   - task: AWSShellScript@1
@@ -324,6 +320,10 @@ jobs:
       scriptType: inline
       inlineScript: |
         set -euo pipefail
+        
+        echo "Updating Kubeconfig..."
+        aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region $(AWS_REGION)
+        
         echo "Installing Argo CD..."
         helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
@@ -334,14 +334,6 @@ jobs:
           --set server.ingress.ingressClassName=nginx \
           --set "server.ingress.paths[0]=/argoCD" \
           --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
-    env:
-      AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
-      AWS_CONFIG_FILE: $(HOME)/.aws/config
-      KUBECONFIG: $(KUBECONFIG)
-      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
-      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
-      AWS_REGION: $(AWS_REGION)
 
   # 9. Install SonarQube
   - task: AWSShellScript@1
@@ -352,6 +344,10 @@ jobs:
       scriptType: inline
       inlineScript: |
         set -euo pipefail
+        
+        echo "Updating Kubeconfig..."
+        aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region $(AWS_REGION)
+        
         echo "Installing SonarQube..."
         helm upgrade --install sonarqube sonarqube \
           --repo https://SonarSource.github.io/helm-chart-sonarqube \
@@ -366,11 +362,3 @@ jobs:
           --set ingress.hosts[0].name="" \
           --set ingress.hosts[0].path=/sonarqube \
           --set "sonarProperties.sonar\.web\.context=/sonarqube"
-    env:
-      AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
-      AWS_CONFIG_FILE: $(HOME)/.aws/config
-      KUBECONFIG: $(KUBECONFIG)
-      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
-      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
-      AWS_REGION: $(AWS_REGION)
