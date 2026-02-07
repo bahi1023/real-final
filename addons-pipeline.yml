@@ -319,7 +319,7 @@ jobs:
           --set server.ingress.enabled=true \
           --set server.ingress.ingressClassName=nginx \
           --set server.ingress.hosts[0].host="" \
-          --set "server.ingress.hosts[0].paths[0].path=/vault"
+          --set "server.ingress.hosts[0].paths[0]=/vault"
 
   # 8. Install Argo CD
   - task: AWSShellScript@1
