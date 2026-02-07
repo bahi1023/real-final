@@ -95,7 +95,9 @@ jobs:
           --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb" \
           --set controller.admissionWebhooks.enabled=false \
           --rollback-on-failure \
-          --wait
+          --wait \
+          --timeout 15m \
+          --debug
 
   # 4. Fetch LB DNS and Update Terraform (Link APIGW)
   - task: AWSShellScript@1
