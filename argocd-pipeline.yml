@@ -8,11 +8,11 @@ variables:
   # OPTIMIZATION: We assume CLUSTER_NAME is provided as a pipeline variable
   CLUSTER_NAME: 'eks-platform-nonprod-v2-cluster'
 
-pool:
-  vmImage: ubuntu-latest
+# pool:
+#   vmImage: ubuntu-latest
 
-#pool:
- # name: queue-bebo_mohammed
+pool:
+ name: queue-bebo_mohammed
 
 jobs:
 - job: ArgoSync
