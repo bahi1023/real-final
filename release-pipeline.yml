@@ -1,8 +1,7 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)-Release
 trigger:
   branches:
-    include:
-      - main
+    include: none
   paths:
     exclude:
       - '*.tf'
@@ -17,10 +16,10 @@ variables:
   IMAGE_REPOSITORY: '20107946/realfinal'
   # OPTIMIZATION: Set this variable in Azure DevOps Library to avoid running Terraform to find it.
   # CLUSTER_NAME: 'realfinal-eks' 
-#pool:
- # vmImage: ubuntu-latest
 pool:
-  name: queue-bebo_mohammed
+ vmImage: ubuntu-latest
+# pool:
+#   name: queue-bebo_mohammed
 
 jobs:
 - job: Release

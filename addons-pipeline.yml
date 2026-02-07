@@ -1,6 +1,5 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)-Addons
-trigger:
-  - main
+trigger: none
 pr: none
 
 parameters:
@@ -16,11 +15,11 @@ variables:
   AWS_SERVICE_CONNECTION: 'bahi-aws-v2'
   AWS_REGION: 'us-east-1'
 
-#pool:
- # vmImage: ubuntu-latest
- 
 pool:
-  name: queue-bebo_mohammed
+  vmImage: ubuntu-latest
+ 
+#pool:
+ # name: queue-bebo_mohammed
 
 jobs:
 - job: Addons

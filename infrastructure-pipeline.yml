@@ -1,12 +1,11 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)-Infrastructure
-trigger:
-  - main
+trigger: none
 pr: none
 
-#pool:
-#  vmImage: ubuntu-latest
 pool:
-  name: queue-bebo_mohammed
+ vmImage: ubuntu-latest
+# pool:
+#   name: queue-bebo_mohammed
 
 parameters:
   - name: env
