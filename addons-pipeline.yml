@@ -301,13 +301,10 @@ jobs:
       arguments: >
         --repo https://helm.releases.hashicorp.com --create-namespace --wait --rollback-on-failure --timeout 5m
         --set server.service.type=ClusterIP
-        # <--- THIS SECTION LINKS VAULT TO THE LOAD BALANCER
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
         --set server.ingress.hosts[0].host=""
         --set "server.ingress.hosts[0].paths[0].path=/vault"
-        # --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
-        # --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
       AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
       AWS_CONFIG_FILE: $(HOME)/.aws/config
@@ -331,7 +328,6 @@ jobs:
       arguments: >
         --repo https://argoproj.github.io/argo-helm --create-namespace --wait --rollback-on-failure --timeout 5m
         --set server.service.type=ClusterIP
-        # <--- THIS SECTION LINKS ARGOCD TO THE LOAD BALANCER
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
         --set "server.ingress.paths[0]=/argoCD"
@@ -362,14 +358,11 @@ jobs:
         --set community.enabled=true
         --set edition=
         --set service.type=ClusterIP
-        # <--- THIS SECTION LINKS SONARQUBE TO THE LOAD BALANCER
         --set ingress.enabled=true
         --set ingress.ingressClassName=nginx
         --set ingress.hosts[0].name=""
         --set ingress.hosts[0].path=/sonarqube
         --set "sonarProperties.sonar\.web\.context=/sonarqube"
-        # --set "ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
-        # --set "ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
       AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
       AWS_CONFIG_FILE: $(HOME)/.aws/config
