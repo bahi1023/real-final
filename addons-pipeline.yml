@@ -211,37 +211,32 @@ jobs:
         grep -v "data" ~/.kube/config || true
   
   # 6. Install OAuth2-Proxy
-  - task: HelmDeploy@0
+  - task: AWSShellScript@1
     displayName: Install OAuth2-Proxy
     inputs:
-      connectionType: None
-      command: upgrade
-      chartType: Name
-      chartName: oauth2-proxy
-      releaseName: oauth2-proxy
-      namespace: ingress-nginx
-      install: true
-      arguments: >
-        --repo https://oauth2-proxy.github.io/manifests
-        --create-namespace --wait --rollback-on-failure --timeout 5m
-        --set config.clientID=$(COGNITO_CLIENT_ID)
-        --set config.clientSecret=$(COGNITO_CLIENT_SECRET)
-        --set config.cookieSecret=$(COOKIE_SECRET)
-        --set extraArgs.provider=oidc
-        --set extraArgs.oidc-issuer-url=$(COGNITO_ISSUER_URL)
-        --set extraArgs.email-domain="*"
-        --set extraArgs.upstream=file:///dev/null
-        --set extraArgs.http-address=0.0.0.0:4180
-        --set ingress.enabled=true
-        --set ingress.className=nginx
-        --set ingress.path=/oauth2
-        --set ingress.hosts[0]=""
-    env:
-      KUBECONFIG: $(KUBECONFIG)
-      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
-      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
-      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
-      AWS_REGION: $(AWS_REGION)
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        
+        echo "Installing OAuth2-Proxy..."
+        helm upgrade --install oauth2-proxy oauth2-proxy \
+          --repo https://oauth2-proxy.github.io/manifests \
+          --namespace ingress-nginx --create-namespace \
+          --wait --rollback-on-failure --timeout 5m \
+          --set config.clientID="$COGNITO_CLIENT_ID" \
+          --set config.clientSecret="$COGNITO_CLIENT_SECRET" \
+          --set config.cookieSecret="$COOKIE_SECRET" \
+          --set extraArgs.provider="oidc" \
+          --set extraArgs.oidc-issuer-url="$COGNITO_ISSUER_URL" \
+          --set extraArgs.email-domain="gmail.com" \
+          --set extraArgs.upstream="file:///dev/null" \
+          --set extraArgs.http-address="0.0.0.0:4180" \
+          --set ingress.enabled=true \
+          --set ingress.className="nginx" \
+          --set ingress.path="/oauth2" \
+          --set ingress.hosts[0]=""
 
   # 7. Install Vault
   

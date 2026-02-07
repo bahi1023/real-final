@@ -16,7 +16,13 @@ resource "aws_cognito_user_pool" "main" {
     Project     = var.project_name
     Environment = var.environment
   }
+
+  admin_create_user_config {
+    allow_admin_create_user_only = false
+  }
 }
+
+
 
 resource "aws_cognito_user_pool_client" "client" {
   name = "${var.project_name}-client"
