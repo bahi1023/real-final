@@ -153,8 +153,15 @@ jobs:
         echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
         echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
         
-        echo "Refeshing kubeconfig for $CLUSTER_NAME..."
-        aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
+        # Refresh Kubeconfig with new credentials
+        CLUSTER_NAME=$(terraform output -raw cluster_name || echo "")
+        if [ -z "$CLUSTER_NAME" ]; then
+             echo "##[error]Could not get cluster_name from Terraform output!"
+             terraform output
+        else 
+             echo "Refeshing kubeconfig for $CLUSTER_NAME..."
+             aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
+        fi
         
         # Verify AWS CLI and Kubeconfig
         echo "AWS CLI Version:"
