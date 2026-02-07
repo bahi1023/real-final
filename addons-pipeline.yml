@@ -322,8 +322,6 @@ jobs:
         --set server.ingress.ingressClassName=nginx
         --set "server.ingress.paths[0]=/argoCD"
         --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
-        # --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
-        # --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
       AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
       AWS_CONFIG_FILE: $(HOME)/.aws/config
