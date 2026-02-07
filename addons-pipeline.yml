@@ -117,19 +117,73 @@ jobs:
         echo "Running Terraform Apply (Pass 2)..."
         terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"
 
-  # 5. Export Credentials
+
+  # 5. Export Credentials and Terraform Outputs
   - task: AWSShellScript@1
-    displayName: 'Export AWS Credentials'
+    displayName: 'Export AWS Credentials & Terraform Outputs'
     inputs:
       awsCredentials: $(AWS_SERVICE_CONNECTION)
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
+        set -euo pipefail
+        cd "$(TF_DIR)"
+        
+        # Export AWS Creds
         echo "##vso[task.setvariable variable=AWS_ACCESS_KEY_ID;isSecret=true]$AWS_ACCESS_KEY_ID"
         echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;isSecret=true]$AWS_SECRET_ACCESS_KEY"
         echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;isSecret=true]$AWS_SESSION_TOKEN"
+        
+        # Capture Terraform Outputs for OAuth2-Proxy
+        COGNITO_CLIENT_ID=$(terraform output -raw cognito_client_id)
+        COGNITO_CLIENT_SECRET=$(terraform output -raw cognito_client_secret)
+        COGNITO_ISSUER_URL=$(terraform output -raw cognito_issuer_url)
+        NLB_DNS=$(terraform output -raw nlb_dns_name | sed 's|http://||g') # Strip http:// if present in output or var
+        # Note: var.nlb_dns_name has http:// prefix, but let's be safe. 
+        # Actually, let's just get it from kubectl again to be sure or trust the previous step.
+        # Let's trust the previous step which updated var.tf
+        
+        # Generate Cookie Secret
+        COOKIE_SECRET=$(openssl rand -base64 32 | head -c 32 | base64)
 
-  # 6. Install Vault
+        echo "##vso[task.setvariable variable=COGNITO_CLIENT_ID;isSecret=true]$COGNITO_CLIENT_ID"
+        echo "##vso[task.setvariable variable=COGNITO_CLIENT_SECRET;isSecret=true]$COGNITO_CLIENT_SECRET"
+        echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
+        echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
+
+  # 6. Install OAuth2-Proxy
+  - task: HelmDeploy@0
+    displayName: Install OAuth2-Proxy
+    inputs:
+      connectionType: None
+      command: upgrade
+      chartType: Name
+      chartName: oauth2-proxy
+      releaseName: oauth2-proxy
+      namespace: ingress-nginx
+      install: true
+      arguments: >
+        --repo https://oauth2-proxy.github.io/manifests
+        --create-namespace --wait --atomic --timeout 5m
+        --set config.clientID=$(COGNITO_CLIENT_ID)
+        --set config.clientSecret=$(COGNITO_CLIENT_SECRET)
+        --set config.cookieSecret=$(COOKIE_SECRET)
+        --set extraArgs.provider=oidc
+        --set extraArgs.oidc-issuer-url=$(COGNITO_ISSUER_URL)
+        --set extraArgs.email-domain="*"
+        --set extraArgs.upstream=file:///dev/null
+        --set extraArgs.http-address=0.0.0.0:4180
+        --set ingress.enabled=true
+        --set ingress.className=nginx
+        --set ingress.path=/oauth2
+        --set ingress.hosts[0]=""
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
+      AWS_REGION: $(AWS_REGION)
+
+  # 7. Install Vault
   
   # FIX: Conflicting Webhook from previous installs causes upgrade failure. Force cleanup.
   - task: AWSShellScript@1
@@ -152,14 +206,21 @@ jobs:
       releaseName: vault
       namespace: vault
       install: true
-      arguments: '--repo https://helm.releases.hashicorp.com --create-namespace --wait --atomic --timeout 5m --set server.ingress.enabled=true --set server.ingress.ingressClassName=nginx --set server.ingress.hosts[0].host="" --set "server.ingress.hosts[0].paths[0].path=/vault"'
+      arguments: >
+        --repo https://helm.releases.hashicorp.com --create-namespace --wait --atomic --timeout 5m
+        --set server.ingress.enabled=true
+        --set server.ingress.ingressClassName=nginx
+        --set server.ingress.hosts[0].host=""
+        --set "server.ingress.hosts[0].paths[0].path=/vault"
+        --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
+        --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
       AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
       AWS_REGION: $(AWS_REGION)
 
-  # 7. Install Argo CD
+  # 8. Install Argo CD
   - task: HelmDeploy@0
     displayName: Install Argo CD
     inputs:
@@ -170,14 +231,21 @@ jobs:
       releaseName: argocd
       namespace: argocd
       install: true
-      arguments: '--repo https://argoproj.github.io/argo-helm --create-namespace --wait --atomic --timeout 5m --set server.ingress.enabled=true --set server.ingress.ingressClassName=nginx --set "server.ingress.paths[0]=/argoCD" --set "server.extraArgs={--insecure,--rootpath=/argoCD}"'
+      arguments: >
+        --repo https://argoproj.github.io/argo-helm --create-namespace --wait --atomic --timeout 5m
+        --set server.ingress.enabled=true
+        --set server.ingress.ingressClassName=nginx
+        --set "server.ingress.paths[0]=/argoCD"
+        --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
+        --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
+        --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
       AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
       AWS_REGION: $(AWS_REGION)
 
-  # 8. Install SonarQube
+  # 9. Install SonarQube
   - task: HelmDeploy@0
     displayName: Install SonarQube
     inputs:
@@ -188,7 +256,18 @@ jobs:
       releaseName: sonarqube
       namespace: sonarqube
       install: true
-      arguments: '--repo https://SonarSource.github.io/helm-chart-sonarqube --create-namespace --wait --atomic --timeout 10m --set monitoringPasscode=changeMe --set community.enabled=true --set edition= --set ingress.enabled=true --set ingress.ingressClassName=nginx --set ingress.hosts[0].name="" --set ingress.hosts[0].path=/sonarqube --set "sonarProperties.sonar\.web\.context=/sonarqube"'
+      arguments: >
+        --repo https://SonarSource.github.io/helm-chart-sonarqube --create-namespace --wait --atomic --timeout 10m
+        --set monitoringPasscode=changeMe
+        --set community.enabled=true
+        --set edition=
+        --set ingress.enabled=true
+        --set ingress.ingressClassName=nginx
+        --set ingress.hosts[0].name=""
+        --set ingress.hosts[0].path=/sonarqube
+        --set "sonarProperties.sonar\.web\.context=/sonarqube"
+        --set "ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-url=http://oauth2-proxy.ingress-nginx.svc.cluster.local:4180/oauth2/auth"
+        --set "ingress.annotations.nginx\.ingress\.kubernetes\.io/auth-signin=https://$NLB_DNS/oauth2/start?rd=\$scheme://\$host\$request_uri"
     env:
       AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
       AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)

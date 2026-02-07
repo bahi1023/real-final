@@ -28,3 +28,14 @@ output "cognito_client_id" {
   description = "Cognito App Client ID"
   value       = aws_cognito_user_pool_client.client.id
 }
+
+output "cognito_client_secret" {
+  description = "Cognito App Client Secret"
+  value       = aws_cognito_user_pool_client.client.client_secret
+  sensitive   = true
+}
+
+output "cognito_issuer_url" {
+  description = "Cognito Issuer URL"
+  value       = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
+}
