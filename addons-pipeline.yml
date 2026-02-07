@@ -288,23 +288,24 @@ jobs:
         echo "Cleaning up conflicting Vault webhooks..."
         kubectl delete MutatingWebhookConfiguration vault-agent-injector-cfg --ignore-not-found=true
 
-  - task: HelmDeploy@0
+  - task: AWSShellScript@1
     displayName: Install Vault
     inputs:
-      connectionType: None
-      command: upgrade
-      chartType: Name
-      chartName: vault
-      releaseName: vault
-      namespace: vault
-      install: true
-      arguments: >
-        --repo https://helm.releases.hashicorp.com --create-namespace --wait --rollback-on-failure --timeout 5m
-        --set server.service.type=ClusterIP
-        --set server.ingress.enabled=true
-        --set server.ingress.ingressClassName=nginx
-        --set server.ingress.hosts[0].host=""
-        --set "server.ingress.hosts[0].paths[0].path=/vault"
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        echo "Installing Vault..."
+        helm upgrade --install vault vault \
+          --repo https://helm.releases.hashicorp.com \
+          --namespace vault --create-namespace \
+          --wait --timeout 5m \
+          --set server.service.type=ClusterIP \
+          --set server.ingress.enabled=true \
+          --set server.ingress.ingressClassName=nginx \
+          --set server.ingress.hosts[0].host="" \
+          --set "server.ingress.hosts[0].paths[0].path=/vault"
     env:
       AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
       AWS_CONFIG_FILE: $(HOME)/.aws/config
@@ -315,23 +316,24 @@ jobs:
       AWS_REGION: $(AWS_REGION)
 
   # 8. Install Argo CD
-  - task: HelmDeploy@0
+  - task: AWSShellScript@1
     displayName: Install Argo CD
     inputs:
-      connectionType: None
-      command: upgrade
-      chartType: Name
-      chartName: argo-cd
-      releaseName: argocd
-      namespace: argocd
-      install: true
-      arguments: >
-        --repo https://argoproj.github.io/argo-helm --create-namespace --wait --rollback-on-failure --timeout 5m
-        --set server.service.type=ClusterIP
-        --set server.ingress.enabled=true
-        --set server.ingress.ingressClassName=nginx
-        --set "server.ingress.paths[0]=/argoCD"
-        --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        echo "Installing Argo CD..."
+        helm upgrade --install argocd argo-cd \
+          --repo https://argoproj.github.io/argo-helm \
+          --namespace argocd --create-namespace \
+          --wait --timeout 5m \
+          --set server.service.type=ClusterIP \
+          --set server.ingress.enabled=true \
+          --set server.ingress.ingressClassName=nginx \
+          --set "server.ingress.paths[0]=/argoCD" \
+          --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
     env:
       AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
       AWS_CONFIG_FILE: $(HOME)/.aws/config
@@ -342,27 +344,28 @@ jobs:
       AWS_REGION: $(AWS_REGION)
 
   # 9. Install SonarQube
-  - task: HelmDeploy@0
+  - task: AWSShellScript@1
     displayName: Install SonarQube
     inputs:
-      connectionType: None
-      command: upgrade
-      chartType: Name
-      chartName: sonarqube
-      releaseName: sonarqube
-      namespace: sonarqube
-      install: true
-      arguments: >
-        --repo https://SonarSource.github.io/helm-chart-sonarqube --create-namespace --wait --rollback-on-failure --timeout 10m
-        --set monitoringPasscode=changeMe
-        --set community.enabled=true
-        --set edition=
-        --set service.type=ClusterIP
-        --set ingress.enabled=true
-        --set ingress.ingressClassName=nginx
-        --set ingress.hosts[0].name=""
-        --set ingress.hosts[0].path=/sonarqube
-        --set "sonarProperties.sonar\.web\.context=/sonarqube"
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        echo "Installing SonarQube..."
+        helm upgrade --install sonarqube sonarqube \
+          --repo https://SonarSource.github.io/helm-chart-sonarqube \
+          --namespace sonarqube --create-namespace \
+          --wait --timeout 10m \
+          --set monitoringPasscode=changeMe \
+          --set community.enabled=true \
+          --set edition= \
+          --set service.type=ClusterIP \
+          --set ingress.enabled=true \
+          --set ingress.ingressClassName=nginx \
+          --set ingress.hosts[0].name="" \
+          --set ingress.hosts[0].path=/sonarqube \
+          --set "sonarProperties.sonar\.web\.context=/sonarqube"
     env:
       AWS_SHARED_CREDENTIALS_FILE: $(HOME)/.aws/credentials
       AWS_CONFIG_FILE: $(HOME)/.aws/config
