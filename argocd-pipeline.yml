@@ -64,7 +64,7 @@ jobs:
         fi
         
         echo "Ensuring ArgoCD Application exists..."
-        kubectl apply -f argocd/application.yaml
+        echo "Skipping ArgoCD Application creation (file deleted)"
 
         echo "Forcing restart of application deployment..."
         if ! kubectl get deployment/realfinal-app -n default >/dev/null 2>&1; then

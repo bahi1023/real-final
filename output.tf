@@ -39,3 +39,8 @@ output "cognito_issuer_url" {
   description = "Cognito Issuer URL"
   value       = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
 }
+
+output "nlb_dns_name" {
+  description = "The DNS name of the Network Load Balancer"
+  value       = var.nlb_dns_name
+}
