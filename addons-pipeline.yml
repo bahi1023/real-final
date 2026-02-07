@@ -93,7 +93,7 @@ jobs:
           --namespace ingress-nginx --create-namespace \
           --set controller.service.type=LoadBalancer \
           --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb" \
-          --atomic \
+          --rollback-on-failure \
           --wait
 
   # 4. Fetch LB DNS and Update Terraform (Link APIGW)
@@ -166,7 +166,7 @@ jobs:
       install: true
       arguments: >
         --repo https://oauth2-proxy.github.io/manifests
-        --create-namespace --wait --atomic --timeout 5m
+        --create-namespace --wait --rollback-on-failure --timeout 5m
         --set config.clientID=$(COGNITO_CLIENT_ID)
         --set config.clientSecret=$(COGNITO_CLIENT_SECRET)
         --set config.cookieSecret=$(COOKIE_SECRET)
@@ -209,7 +209,7 @@ jobs:
       namespace: vault
       install: true
       arguments: >
-        --repo https://helm.releases.hashicorp.com --create-namespace --wait --atomic --timeout 5m
+        --repo https://helm.releases.hashicorp.com --create-namespace --wait --rollback-on-failure --timeout 5m
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
         --set server.ingress.hosts[0].host=""
@@ -234,7 +234,7 @@ jobs:
       namespace: argocd
       install: true
       arguments: >
-        --repo https://argoproj.github.io/argo-helm --create-namespace --wait --atomic --timeout 5m
+        --repo https://argoproj.github.io/argo-helm --create-namespace --wait --rollback-on-failure --timeout 5m
         --set server.ingress.enabled=true
         --set server.ingress.ingressClassName=nginx
         --set "server.ingress.paths[0]=/argoCD"
@@ -259,7 +259,7 @@ jobs:
       namespace: sonarqube
       install: true
       arguments: >
-        --repo https://SonarSource.github.io/helm-chart-sonarqube --create-namespace --wait --atomic --timeout 10m
+        --repo https://SonarSource.github.io/helm-chart-sonarqube --create-namespace --wait --rollback-on-failure --timeout 10m
         --set monitoringPasscode=changeMe
         --set community.enabled=true
         --set edition=
