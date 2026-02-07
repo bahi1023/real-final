@@ -295,10 +295,20 @@ jobs:
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
+      inlineScript: |
         set -euo pipefail
         
-        echo "Updating Kubeconfig..."
-        aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region $(AWS_REGION)
+        # 1. Go to Terraform dir to get outputs
+        cd "$(TF_DIR)"
+        CLUSTER_NAME=$(terraform output -raw cluster_name)
+        
+        # 2. Update Kubeconfig
+        echo "Updating Kubeconfig for $CLUSTER_NAME..."
+        aws eks update-kubeconfig --name "$CLUSTER_NAME" --region $(AWS_REGION)
+        
+        # 3. Patch Kubeconfig to use absolute path (Security/Path fix)
+        AWS_BIN=$(which aws)
+        sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
 
         echo "Installing Vault..."
         helm upgrade --install vault vault \
@@ -319,10 +329,20 @@ jobs:
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
+      inlineScript: |
         set -euo pipefail
         
-        echo "Updating Kubeconfig..."
-        aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region $(AWS_REGION)
+        # 1. Go to Terraform dir to get outputs
+        cd "$(TF_DIR)"
+        CLUSTER_NAME=$(terraform output -raw cluster_name)
+        
+        # 2. Update Kubeconfig
+        echo "Updating Kubeconfig for $CLUSTER_NAME..."
+        aws eks update-kubeconfig --name "$CLUSTER_NAME" --region $(AWS_REGION)
+         
+        # 3. Patch Kubeconfig
+        AWS_BIN=$(which aws)
+        sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
         echo "Installing Argo CD..."
         helm upgrade --install argocd argo-cd \
@@ -343,10 +363,20 @@ jobs:
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
+      inlineScript: |
         set -euo pipefail
         
-        echo "Updating Kubeconfig..."
-        aws eks update-kubeconfig --name $(terraform output -raw cluster_name) --region $(AWS_REGION)
+        # 1. Go to Terraform dir to get outputs
+        cd "$(TF_DIR)"
+        CLUSTER_NAME=$(terraform output -raw cluster_name)
+        
+        # 2. Update Kubeconfig
+        echo "Updating Kubeconfig for $CLUSTER_NAME..."
+        aws eks update-kubeconfig --name "$CLUSTER_NAME" --region $(AWS_REGION)
+        
+        # 3. Patch Kubeconfig
+        AWS_BIN=$(which aws)
+        sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
         echo "Installing SonarQube..."
         helm upgrade --install sonarqube sonarqube \
