@@ -161,6 +161,12 @@ jobs:
         else 
              echo "Refeshing kubeconfig for $CLUSTER_NAME..."
              aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
+             
+             # FIX: Force absolute path for aws binary in kubeconfig
+             # This ensures HelmDeploy task (which might sanitize PATH) can find the authenticator.
+             AWS_BIN=$(which aws)
+             echo "Patching kubeconfig to use: $AWS_BIN"
+             sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config
         fi
         
         # Verify AWS CLI and Kubeconfig
