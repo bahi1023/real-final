@@ -221,10 +221,24 @@ jobs:
         set -euo pipefail
         
         echo "Installing OAuth2-Proxy..."
+        
+        # Function to run on failure
+        handle_error() {
+          echo "##[error] OAuth2-Proxy deployment failed!"
+          echo "Fetching debug logs..."
+          kubectl get all -n ingress-nginx
+          kubectl describe pod -l app.kubernetes.io/name=oauth2-proxy -n ingress-nginx || true
+          kubectl logs -l app.kubernetes.io/name=oauth2-proxy -n ingress-nginx --all-containers --tail=100 || true
+          kubectl get events -n ingress-nginx --sort-by='.lastTimestamp' || true
+        }
+        
+        # Set up trap to call handle_error on script failure
+        trap 'handle_error' ERR
+
         helm upgrade --install oauth2-proxy oauth2-proxy \
           --repo https://oauth2-proxy.github.io/manifests \
           --namespace ingress-nginx --create-namespace \
-          --wait --rollback-on-failure --timeout 5m \
+          --wait --timeout 10m \
           --set config.clientID="$COGNITO_CLIENT_ID" \
           --set config.clientSecret="$COGNITO_CLIENT_SECRET" \
           --set config.cookieSecret="$COOKIE_SECRET" \
