@@ -25,17 +25,17 @@ resource "aws_apigatewayv2_vpc_link" "main" {
   }
 }
 
-resource "aws_apigatewayv2_authorizer" "jwt" {
-  api_id           = aws_apigatewayv2_api.main.id
-  authorizer_type  = "JWT"
-  identity_sources = ["$request.header.Authorization"]
-  name             = "CognitoJWT"
-
-  jwt_configuration {
-    audience = [aws_cognito_user_pool_client.client.id]
-    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
-  }
-}
+# resource "aws_apigatewayv2_authorizer" "jwt" {
+#   api_id           = aws_apigatewayv2_api.main.id
+#   authorizer_type  = "JWT"
+#   identity_sources = ["$request.header.Authorization"]
+#   name             = "CognitoJWT"
+#
+#   jwt_configuration {
+#     audience = [aws_cognito_user_pool_client.client.id]
+#     issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
+#   }
+# }
 
 resource "aws_apigatewayv2_integration" "nlb_proxy" {
   api_id           = aws_apigatewayv2_api.main.id
