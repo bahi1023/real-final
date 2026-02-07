@@ -295,7 +295,6 @@ jobs:
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
-      inlineScript: |
         set -euo pipefail
         
         # 1. Go to Terraform dir to get outputs
@@ -329,7 +328,6 @@ jobs:
       regionName: $(AWS_REGION)
       scriptType: inline
       inlineScript: |
-      inlineScript: |
         set -euo pipefail
         
         # 1. Go to Terraform dir to get outputs
@@ -362,7 +360,6 @@ jobs:
       awsCredentials: $(AWS_SERVICE_CONNECTION)
       regionName: $(AWS_REGION)
       scriptType: inline
-      inlineScript: |
       inlineScript: |
         set -euo pipefail
         
