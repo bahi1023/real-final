@@ -388,12 +388,13 @@ jobs:
             enabled: true
             ingressClassName: nginx
             paths:
-              - /argocd
+              - /argocd(/|$)(.*)
             annotations:
-              nginx.ingress.kubernetes.io/rewrite-target: /
+              nginx.ingress.kubernetes.io/rewrite-target: /$2
               nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-          extraArgs:
-            - --insecure
+              nginx.ingress.kubernetes.io/use-regex: "true"
+           extraArgs:
+             - --insecure
             - --rootpath=/argocd
         repoServer:
           replicas: 1
