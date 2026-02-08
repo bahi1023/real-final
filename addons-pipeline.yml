@@ -410,7 +410,7 @@ jobs:
            helm upgrade --install argocd argo-cd \
              --repo https://argoproj.github.io/argo-helm \
              --namespace bahi --create-namespace \
-             --wait --timeout 10m \
+             --wait --timeout 10m --force \
              -f argocd-ingress-values.yaml && break
            n=$((n+1))
            echo "Deploy failed (attempt $n/3). Retrying in 10s..."
