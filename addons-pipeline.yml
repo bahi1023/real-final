@@ -393,8 +393,8 @@ jobs:
               nginx.ingress.kubernetes.io/rewrite-target: /$2
               nginx.ingress.kubernetes.io/backend-protocol: HTTPS
               nginx.ingress.kubernetes.io/use-regex: "true"
-           extraArgs:
-             - --insecure
+          extraArgs:
+            - --insecure
             - --rootpath=/argocd
         repoServer:
           replicas: 1
