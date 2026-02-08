@@ -76,11 +76,17 @@ jobs:
         # Using the motivational-app chart we created
         # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
         
-        helm upgrade --install motivational-app ./motivational-app \
+        if ! helm upgrade --install motivational-app ./motivational-app \
           --namespace default \
           --set image.tag="$(Build.BuildId)" \
           --wait --timeout 10m \
-          --debug
+          --debug; then
+            echo "Helm upgrade failed. debugging..."
+            kubectl get pods -n default -l app.kubernetes.io/instance=motivational-app
+            kubectl describe pods -n default -l app.kubernetes.io/instance=motivational-app
+            kubectl logs -n default -l app.kubernetes.io/instance=motivational-app --tail=50
+            exit 1
+        fi
 
         echo "Forcing restart of application deployment to ensure latest image..."
         # The chart creates a deployment named 'simple-web-app' (from values.yaml fullnameOverride)
