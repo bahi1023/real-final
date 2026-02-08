@@ -1,0 +1,23 @@
+redis-ha:
+  enabled: false
+controller:
+  replicas: 1
+server:
+  replicas: 1
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    paths:
+      - /argocd
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+  extraArgs:
+    - --insecure
+    - --rootpath=/argocd
+repoServer:
+  replicas: 1
+applicationController:
+  replicas: 1
