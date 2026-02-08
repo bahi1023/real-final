@@ -318,7 +318,7 @@ jobs:
           --set "server.ingress.enabled=true" \
           --set "server.ingress.ingressClassName=nginx" \
           --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target=/\$2" \
-          --set "server.ingress.hosts[0].host=vault.example.com" \
+          --set "server.ingress.hosts[0].host=" \
           --set "server.ingress.hosts[0].paths[0]=/vault(/|\$)(.*)" \
           --set "ui.enabled=true"
 
@@ -354,7 +354,7 @@ jobs:
           --set "server.ingress.ingressClassName=nginx" \
           --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target=/\$2" \
           --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/backend-protocol=HTTPS" \
-          --set "server.ingress.hosts[0]=argocd.example.com" \
+          --set "server.ingress.hosts[0]=" \
           --set "server.ingress.paths[0]=/argocd(/|\$)(.*)" \
           --set "server.extraArgs={--insecure,--rootpath=/argocd}"
 
