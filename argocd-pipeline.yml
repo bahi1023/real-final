@@ -89,7 +89,7 @@ jobs:
         
         if ! helm upgrade --install motivational-app ./motivational-app \
           --namespace default \
-          --set image.tag="$(Build.BuildId)" \
+          --set image.tag="latest" \
           --wait --timeout 10m \
           --debug; then
             echo "Helm upgrade failed. debugging..."
