@@ -314,11 +314,7 @@ jobs:
         kubectl delete clusterrole vault-agent-injector-clusterrole --ignore-not-found=true
         kubectl delete clusterrolebinding vault-agent-injector-binding --ignore-not-found=true
         kubectl delete clusterrolebinding vault-server-binding --ignore-not-found=true
-        
-        # Delete old SonarQube resources
-        kubectl delete clusterrole sonarqube-sonarqube --ignore-not-found=true
-        kubectl delete clusterrolebinding sonarqube-sonarqube --ignore-not-found=true
-        
+  
         echo "Installing Vault..."
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
