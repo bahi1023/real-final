@@ -47,9 +47,9 @@ jobs:
         aws eks update-kubeconfig --name "$(CLUSTER_NAME)" --region "$(AWS_REGION)"
         echo "##vso[task.setvariable variable=CLUSTER_EXISTS]true"
 
-  # 2. Trigger Rollout Restart
+  # 2. Deploy/Update Motivational App
   - task: AWSShellScript@1
-    displayName: Restart Deployment (Pull New Image)
+    displayName: Deploy Motivational App (Helm)
     inputs:
       awsCredentials: $(AWS_SERVICE_CONNECTION)
       regionName: $(AWS_REGION)
@@ -58,19 +58,25 @@ jobs:
         set -euo pipefail
         
         if [ "$(CLUSTER_EXISTS)" == "false" ]; then
-           echo "Cluster does not exist. Skipping deployment restart."
+           echo "Cluster does not exist. Skipping deployment."
            exit 0
         fi
         
-        echo "Ensuring ArgoCD Application exists..."
-        echo "Skipping ArgoCD Application creation (file deleted)"
-
-        echo "Forcing restart of application deployment..."
-        if ! kubectl get deployment/realfinal-app -n default >/dev/null 2>&1; then
-           echo "Deployment 'realfinal-app' not found. Skipping restart (it might be the first deployment)."
-           exit 0
+        # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
+        if ! command -v helm &> /dev/null; then
+            echo "Installing Helm..."
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
         fi
-        kubectl rollout restart deployment/realfinal-app -n default
+
+        echo "Deploying Motivational App..."
+        # Using the motivational-app chart we created
+        helm upgrade --install motivational-app ./motivational-app \
+          --namespace default \
+          --wait --timeout 5m
+
+        echo "Forcing restart of application deployment to ensure latest image..."
+        # The chart creates a deployment named 'simple-web-app' (from values.yaml fullnameOverride)
+        kubectl rollout restart deployment/simple-web-app -n default
         
         echo "Checking rollout status..."
-        kubectl rollout status deployment/realfinal-app -n default
+        kubectl rollout status deployment/simple-web-app -n default
