@@ -309,6 +309,11 @@ jobs:
         AWS_BIN=$(which aws)
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
 
+        echo "Cleaning up potential old Vault resources..."
+        kubectl delete clusterrole vault-agent-injector-clusterrole --ignore-not-found=true
+        kubectl delete clusterrolebinding vault-agent-injector-binding --ignore-not-found=true
+        kubectl delete clusterrolebinding vault-server-binding --ignore-not-found=true
+        
         echo "Installing Vault..."
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
