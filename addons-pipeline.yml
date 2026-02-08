@@ -391,7 +391,6 @@ jobs:
             ingressClassName: nginx
             paths:
               - /argocd(/|$)(.*)
-            servicePort: 80
             annotations:
               nginx.ingress.kubernetes.io/rewrite-target: /$2
               nginx.ingress.kubernetes.io/backend-protocol: HTTP
