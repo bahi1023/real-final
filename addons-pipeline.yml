@@ -374,8 +374,8 @@ jobs:
         
         echo "Installing Argo CD..."
         
-        # Create values.yaml to avoid quoting issues with --set (like SonarQube)
-        cat > argocd-ingress-values.yaml <<'EOF'
+        # Create values.yaml to avoid quoting issues with --set. Strip leading spaces to ensure valid YAML.
+        cat <<'EOF' | sed 's/^ *//' > argocd-ingress-values.yaml
         redis-ha:
           enabled: false
         controller:
