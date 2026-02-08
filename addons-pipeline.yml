@@ -385,10 +385,6 @@ jobs:
           ingress:
             enabled: true
             ingressClassName: nginx
-            hosts:
-              - ""
-            paths:
-              - /argocd
             annotations:
               nginx.ingress.kubernetes.io/rewrite-target: /
               nginx.ingress.kubernetes.io/backend-protocol: HTTPS
