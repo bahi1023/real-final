@@ -331,7 +331,7 @@ jobs:
         
         helm upgrade --install vault vault \
           --repo https://helm.releases.hashicorp.com \
-          --namespace vault --create-namespace \
+          --namespace default\
           --wait --timeout 5m \
           -f vault-ingress-values.yaml
 
@@ -381,7 +381,7 @@ jobs:
         
         helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
-          --namespace argocd --create-namespace \
+          --namespace default \
           --wait --timeout 5m \
           -f argocd-ingress-values.yaml
 
@@ -429,6 +429,6 @@ jobs:
 
         helm upgrade --install sonarqube sonarqube \
           --repo https://SonarSource.github.io/helm-chart-sonarqube \
-          --namespace sonarqube --create-namespace \
+          --namespace default \
           --wait --timeout 10m \
           -f sonarqube-values.yaml
