@@ -79,18 +79,16 @@ jobs:
             curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
         fi
 
-        echo "Deploying Motivational App..."
+        echo "Deploying Helm Chart..."
         # Using the motivational-app chart we created
         # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
         
         if ! helm upgrade --install motivational-app ./motivational-app \
-          --namespace default \
+          --namespace bahi --create-namespace \
           --set image.tag="latest" \
           --wait --timeout 10m \
           --debug; then
             echo "Helm upgrade failed. debugging..."
-            kubectl get pods -n default -l app.kubernetes.io/instance=motivational-app
-            kubectl describe pods -n default -l app.kubernetes.io/instance=motivational-app
             kubectl logs -n default -l app.kubernetes.io/instance=motivational-app --tail=50
             exit 1
         fi
