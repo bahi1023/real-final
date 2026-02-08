@@ -310,17 +310,30 @@ jobs:
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
 
         echo "Installing Vault..."
+        
+        # Create values.yaml to avoid quoting issues with --set (like SonarQube)
+        cat > vault-ingress-values.yaml <<EOF
+        server:
+          service:
+            type: ClusterIP
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - host: ""
+                paths:
+                  - /vault
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: /
+        ui:
+          enabled: true
+        EOF
+        
         helm upgrade --install vault vault \
           --repo https://helm.releases.hashicorp.com \
           --namespace vault --create-namespace \
           --wait --timeout 5m \
-          --set server.service.type=ClusterIP \
-          --set "server.ingress.enabled=true" \
-          --set "server.ingress.ingressClassName=nginx" \
-          --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target=/\$2" \
-          --set "server.ingress.hosts[0].host=" \
-          --set "server.ingress.hosts[0].paths[0]=/vault(/|\$)(.*)" \
-          --set "ui.enabled=true"
+          -f vault-ingress-values.yaml
 
   # 8. Install Argo CD
   - task: AWSShellScript@1
@@ -345,18 +358,32 @@ jobs:
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
         echo "Installing Argo CD..."
+        
+        # Create values.yaml to avoid quoting issues with --set (like SonarQube)
+        cat > argocd-ingress-values.yaml <<EOF
+        server:
+          service:
+            type: ClusterIP
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - ""
+            paths:
+              - /argocd
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: /
+              nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+          extraArgs:
+            - --insecure
+            - --rootpath=/argocd
+        EOF
+        
         helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
           --namespace argocd --create-namespace \
           --wait --timeout 5m \
-          --set server.service.type=ClusterIP \
-          --set "server.ingress.enabled=true" \
-          --set "server.ingress.ingressClassName=nginx" \
-          --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target=/\$2" \
-          --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/backend-protocol=HTTPS" \
-          --set "server.ingress.hosts[0]=" \
-          --set "server.ingress.paths[0]=/argocd(/|\$)(.*)" \
-          --set "server.extraArgs={--insecure,--rootpath=/argocd}"
+          -f argocd-ingress-values.yaml
 
   # 9. Install SonarQube
   - task: AWSShellScript@1
