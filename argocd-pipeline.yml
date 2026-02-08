@@ -62,18 +62,16 @@ jobs:
            exit 0
         fi
 
-        # Create Docker Registry Secret (regcred)
-        # Using the Docker Registry service connection details from the environment
-        if ! kubectl get secret regcred -n default >/dev/null 2>&1; then
-            echo "Creating 'regcred' secret for Docker Registry..."
-            kubectl create secret docker-registry regcred \
-              --docker-server=https://index.docker.io/v1/ \
-              --docker-username="$DOCKER_USER" \
-              --docker-password="$DOCKER_PASSWORD" \
-              --docker-email=example@example.com
-        else
-            echo "'regcred' secret already exists."
-        fi
+        # Create Docker Registry Secret (regcred) - FORCE UPDATE
+        # Delete existing secret to ensure we use the latest credentials
+        kubectl delete secret regcred -n default --ignore-not-found=true
+        
+        echo "Creating 'regcred' secret for Docker Registry..."
+        kubectl create secret docker-registry regcred \
+          --docker-server=https://index.docker.io/v1/ \
+          --docker-username="$DOCKER_USER" \
+          --docker-password="$DOCKER_PASSWORD" \
+          --docker-email=example@example.com
         
         # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
         if ! command -v helm &> /dev/null; then
