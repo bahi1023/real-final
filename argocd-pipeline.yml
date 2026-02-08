@@ -74,6 +74,10 @@ jobs:
           --docker-email=bebomohammed904@gmail.com
         
         # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
+        # 0. Clean up old deployment in default namespace to avoid duplication
+        echo "Checking for old deployment in default namespace..."
+        helm uninstall motivational-app -n default 2>/dev/null || true
+        
         if ! command -v helm &> /dev/null; then
             echo "Installing Helm..."
             curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash

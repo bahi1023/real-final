@@ -326,6 +326,10 @@ jobs:
         kubectl delete crd argocdextensions.argoproj.io --ignore-not-found=true
         kubectl delete crd applicationsets.argoproj.io --ignore-not-found=true
         
+        # Delete old SonarQube resources
+        kubectl delete clusterrole sonarqube-sonarqube --ignore-not-found=true
+        kubectl delete clusterrolebinding sonarqube-sonarqube --ignore-not-found=true
+        
         echo "Installing Vault..."
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
