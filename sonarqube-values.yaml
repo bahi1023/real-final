@@ -134,8 +134,9 @@ networkPolicy:
   # additionalNetworkPolicies:
 
 # will be used as default for ingress path and probes path, will be injected in .Values.env as SONAR_WEB_CONTEXT
+# will be used as default for ingress path and probes path, will be injected in .Values.env as SONAR_WEB_CONTEXT
 # if .Values.env.SONAR_WEB_CONTEXT is set, this value will be ignored
-sonarWebContext: ""
+sonarWebContext: "/sonarqube"
 
 # (DEPRECATED) please use ingress-nginx instead
 # nginx:
@@ -169,22 +170,23 @@ httproute:
   #     port: 8080
 
 ingress:
-  enabled: false
+  enabled: true
   # Used to create an Ingress record.
   hosts:
-    - name: sonarqube.your-org.com
+    - name: sonarqube.example.com
       # Different clouds or configurations might need /* as the default path
-      # path: /
+      path: /sonarqube
       # For additional control over serviceName and servicePort
       # serviceName: someService
       # servicePort: somePort
       # the pathType can be one of the following values: Exact|Prefix|ImplementationSpecific(default)
-      # pathType: ImplementationSpecific
-  annotations: {}
+      pathType: Prefix
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "64m"
   # kubernetes.io/tls-acme: "true"
 
   # Set the ingressClassName on the ingress record
-  # ingressClassName: nginx
+  ingressClassName: nginx
 
   # Additional labels for Ingress manifest file
   # labels:
