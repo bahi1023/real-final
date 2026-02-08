@@ -339,6 +339,9 @@ jobs:
           enabled: true
         EOF
         
+        # Delete existing Vault StatefulSet if needed (to allow storage changes)
+        kubectl delete statefulset vault -n bahi --ignore-not-found=true
+
         helm upgrade --install vault vault \
           --repo https://helm.releases.hashicorp.com \
           --namespace bahi --create-namespace \
