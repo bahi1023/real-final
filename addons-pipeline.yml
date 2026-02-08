@@ -387,8 +387,6 @@ jobs:
           ingress:
             enabled: true
             ingressClassName: nginx
-            hosts:
-              - ""
             paths:
               - /argocd
             annotations:
