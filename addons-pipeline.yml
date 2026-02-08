@@ -390,6 +390,7 @@ jobs:
           --repo https://argoproj.github.io/argo-helm \
           --namespace bahi --create-namespace \
           --timeout 10m \
+          --no-hooks \
           -f argocd-ingress-values.yaml; then
             echo "ArgoCD helm upgrade failed."
             exit 1
