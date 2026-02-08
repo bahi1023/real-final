@@ -363,22 +363,22 @@ jobs:
         AWS_BIN=$(which aws)
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
-        echo "Cleaning up potential old ArgoCD resources..."
-        kubectl delete clusterrole argocd-application-controller --ignore-not-found=true
-        kubectl delete clusterrolebinding argocd-application-controller --ignore-not-found=true
-        kubectl delete clusterrole argocd-server --ignore-not-found=true
-        kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
-        kubectl delete clusterrole argocd-notifications-controller --ignore-not-found=true
-        kubectl delete clusterrolebinding argocd-notifications-controller --ignore-not-found=true
-        kubectl delete clusterrole argocd-redis-ha --ignore-not-found=true
-        kubectl delete clusterrolebinding argocd-redis-ha --ignore-not-found=true
-        kubectl delete clusterrole argocd-repo-server --ignore-not-found=true
-        kubectl delete clusterrolebinding argocd-repo-server --ignore-not-found=true
-        # Delete ArgoCD CRDs to avoid ownership conflicts
-        kubectl delete crd applications.argoproj.io --ignore-not-found=true
-        kubectl delete crd appprojects.argoproj.io --ignore-not-found=true
-        kubectl delete crd argocdextensions.argoproj.io --ignore-not-found=true
-        kubectl delete crd applicationsets.argoproj.io --ignore-not-found=true
+        # echo "Cleaning up potential old ArgoCD resources..."
+        # kubectl delete clusterrole argocd-application-controller --ignore-not-found=true
+        # kubectl delete clusterrolebinding argocd-application-controller --ignore-not-found=true
+        # kubectl delete clusterrole argocd-server --ignore-not-found=true
+        # kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
+        # kubectl delete clusterrole argocd-notifications-controller --ignore-not-found=true
+        # kubectl delete clusterrolebinding argocd-notifications-controller --ignore-not-found=true
+        # kubectl delete clusterrole argocd-redis-ha --ignore-not-found=true
+        # kubectl delete clusterrolebinding argocd-redis-ha --ignore-not-found=true
+        # kubectl delete clusterrole argocd-repo-server --ignore-not-found=true
+        # kubectl delete clusterrolebinding argocd-repo-server --ignore-not-found=true
+        # # Delete ArgoCD CRDs to avoid ownership conflicts
+        # kubectl delete crd applications.argoproj.io --ignore-not-found=true
+        # kubectl delete crd appprojects.argoproj.io --ignore-not-found=true
+        # kubectl delete crd argocdextensions.argoproj.io --ignore-not-found=true
+        # kubectl delete crd applicationsets.argoproj.io --ignore-not-found=true
 
         echo "Installing Argo CD..."
         
@@ -408,14 +408,25 @@ jobs:
         if ! helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
           --namespace bahi --create-namespace \
-          --wait --timeout 5m \
+          --timeout 10m \
           -f argocd-ingress-values.yaml; then
-            echo "ArgoCD installation failed. Debugging..."
+            echo "ArgoCD helm upgrade failed."
+            exit 1
+        fi
+        
+        echo "Waiting for ArgoCD Redis Secret Init Job..."
+        # Wait up to 5 minutes for the job to complete
+        if ! kubectl wait --for=condition=complete job/argocd-redis-secret-init -n bahi --timeout=300s; then
+            echo "ArgoCD Redis Secret Init Job timed out or failed. Debugging..."
             kubectl get pods -n bahi
             kubectl describe job -n bahi argocd-redis-secret-init || true
             kubectl logs -n bahi -l job-name=argocd-redis-secret-init --tail=100 || true
+            # Check for events in the namespace to see pulling errors
+            kubectl get events -n bahi --sort-by='.lastTimestamp' | tail -n 20
             exit 1
         fi
+        
+        echo "ArgoCD Redis Secret Init Job completed successfully."
 
   # 9. Install SonarQube
   - task: AWSShellScript@1
