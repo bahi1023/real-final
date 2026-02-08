@@ -410,11 +410,14 @@ jobs:
            helm upgrade --install argocd argo-cd \
              --repo https://argoproj.github.io/argo-helm \
              --namespace bahi --create-namespace \
-             --wait --timeout 10m --force \
+             --wait --timeout 10m \
              -f argocd-ingress-values.yaml && break
            n=$((n+1))
            echo "Deploy failed (attempt $n/3). Retrying in 10s..."
-           sleep 10
+           # Aggressive cleanup: Uninstall to clear bad state/conflicts
+           helm uninstall argocd -n bahi || true
+           # Wait a bit for resources to terminate
+           sleep 20
         done
         
         if [ "$n" -eq 3 ]; then
