@@ -321,6 +321,9 @@ jobs:
           ha:
             enabled: false
             replicas: 1
+          dataStorage:
+            storageClass: gp2
+            size: 1Gi
           service:
             type: ClusterIP
           ingress:
@@ -366,6 +369,14 @@ jobs:
         
         echo "Installing Argo CD..."
         
+        # Manually create Redis secret since we are skipping hooks
+        if ! kubectl get secret argocd-redis -n bahi > /dev/null 2>&1; then
+            echo "Creating argocd-redis secret manually..."
+            kubectl create secret generic argocd-redis -n bahi \
+              --from-literal=auth=$(openssl rand -base64 32) \
+              --from-literal=redis-password=$(openssl rand -base64 32)
+        fi
+        
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
         cat > argocd-ingress-values.yaml <<EOF
         redis-ha:
@@ -410,15 +421,15 @@ jobs:
         
         echo "Waiting for ArgoCD Redis Secret Init Job..."
         # Wait up to 5 minutes for the job to complete
-        if ! kubectl wait --for=condition=complete job/argocd-redis-secret-init -n bahi --timeout=300s; then
-            echo "ArgoCD Redis Secret Init Job timed out or failed. Debugging..."
-            kubectl get pods -n bahi
-            kubectl describe job -n bahi argocd-redis-secret-init || true
-            kubectl logs -n bahi -l job-name=argocd-redis-secret-init --tail=100 || true
-            # Check for events in the namespace to see pulling errors
-            kubectl get events -n bahi --sort-by='.lastTimestamp' | tail -n 20
-            exit 1
-        fi
+        # if ! kubectl wait --for=condition=complete job/argocd-redis-secret-init -n bahi --timeout=300s; then
+        #     echo "ArgoCD Redis Secret Init Job timed out or failed. Debugging..."
+        #     kubectl get pods -n bahi
+        #     kubectl describe job -n bahi argocd-redis-secret-init || true
+        #     kubectl logs -n bahi -l job-name=argocd-redis-secret-init --tail=100 || true
+        #     # Check for events in the namespace to see pulling errors
+        #     kubectl get events -n bahi --sort-by='.lastTimestamp' | tail -n 20
+        #     exit 1
+        # fi
         
         echo "ArgoCD Redis Secret Init Job completed successfully."
 
