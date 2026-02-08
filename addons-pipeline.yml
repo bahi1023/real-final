@@ -315,10 +315,12 @@ jobs:
           --namespace vault --create-namespace \
           --wait --timeout 5m \
           --set server.service.type=ClusterIP \
-          --set server.ingress.enabled=true \
-          --set server.ingress.ingressClassName=nginx \
-          --set server.ingress.hosts[0].host="" \
-          --set "server.ingress.hosts[0].paths[0]=/vault"
+          --set "server.ingress.enabled=true" \
+          --set "server.ingress.ingressClassName=nginx" \
+          --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target=/\$2" \
+          --set "server.ingress.hosts[0].host=vault.example.com" \
+          --set "server.ingress.hosts[0].paths[0]=/vault(/|\$)(.*)" \
+          --set "ui.enabled=true"
 
   # 8. Install Argo CD
   - task: AWSShellScript@1
@@ -348,11 +350,13 @@ jobs:
           --namespace argocd --create-namespace \
           --wait --timeout 5m \
           --set server.service.type=ClusterIP \
-          --set server.ingress.enabled=true \
-          --set server.ingress.ingressClassName=nginx \
-          --set server.ingress.hosts[0]="" \
-          --set "server.ingress.paths[0]=/argoCD" \
-          --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
+          --set "server.ingress.enabled=true" \
+          --set "server.ingress.ingressClassName=nginx" \
+          --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/rewrite-target=/\$2" \
+          --set "server.ingress.annotations.nginx\.ingress\.kubernetes\.io/backend-protocol=HTTPS" \
+          --set "server.ingress.hosts[0]=argocd.example.com" \
+          --set "server.ingress.paths[0]=/argocd(/|\$)(.*)" \
+          --set "server.extraArgs={--insecure,--rootpath=/argocd}"
 
   # 9. Install SonarQube
   - task: AWSShellScript@1
