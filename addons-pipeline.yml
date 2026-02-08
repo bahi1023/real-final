@@ -384,7 +384,7 @@ jobs:
         EOF
         
         # Cleanup potential stuck jobs from previous failed installs
-        kubectl delete job -n bahi argocd-redis-secret-init --ignore-not-found=true
+        # kubectl delete job -n bahi argocd-redis-secret-init --ignore-not-found=true
         
         if ! helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
