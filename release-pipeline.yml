@@ -1,12 +1,5 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)-Release
-trigger:
-  branches:
-    include: none
-  paths:
-    exclude:
-      - '*.tf'
-      - '*.yml'
-      - '*.md'
+trigger: none
 
 pr: none
 
