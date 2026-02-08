@@ -309,10 +309,17 @@ jobs:
         AWS_BIN=$(which aws)
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
 
-        echo "Cleaning up potential old Vault resources..."
+        echo "Cleaning up potential old Vault/ArgoCD resources..."
+        # Delete old Vault resources
         kubectl delete clusterrole vault-agent-injector-clusterrole --ignore-not-found=true
         kubectl delete clusterrolebinding vault-agent-injector-binding --ignore-not-found=true
         kubectl delete clusterrolebinding vault-server-binding --ignore-not-found=true
+        
+        # Delete old ArgoCD resources
+        kubectl delete clusterrole argocd-server --ignore-not-found=true
+        kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
+        kubectl delete clusterrole argocd-application-controller --ignore-not-found=true
+        kubectl delete clusterrolebinding argocd-application-controller --ignore-not-found=true
         
         echo "Installing Vault..."
         
@@ -336,7 +343,7 @@ jobs:
         
         helm upgrade --install vault vault \
           --repo https://helm.releases.hashicorp.com \
-          --namespace default\
+          --namespace bahi --create-namespace \
           --wait --timeout 5m \
           -f vault-ingress-values.yaml
 
@@ -386,7 +393,7 @@ jobs:
         
         helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
-          --namespace default \
+          --namespace bahi --create-namespace \
           --wait --timeout 5m \
           -f argocd-ingress-values.yaml
 
@@ -434,6 +441,6 @@ jobs:
 
         helm upgrade --install sonarqube sonarqube \
           --repo https://SonarSource.github.io/helm-chart-sonarqube \
-          --namespace default \
+          --namespace bahi --create-namespace \
           --wait --timeout 10m \
           -f sonarqube-values.yaml
