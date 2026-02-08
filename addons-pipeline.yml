@@ -404,13 +404,22 @@ jobs:
         # Cleanup potential stuck jobs from previous failed installs
         # kubectl delete job -n bahi argocd-redis-secret-init --ignore-not-found=true
         
-        if ! helm upgrade --install argocd argo-cd \
-          --repo https://argoproj.github.io/argo-helm \
-          --namespace bahi --create-namespace \
-          --timeout 10m \
-          -f argocd-ingress-values.yaml; then
-            echo "ArgoCD helm upgrade failed."
-            exit 1
+        n=0
+        until [ "$n" -ge 3 ]
+        do
+           helm upgrade --install argocd argo-cd \
+             --repo https://argoproj.github.io/argo-helm \
+             --namespace bahi --create-namespace \
+             --wait --timeout 10m \
+             -f argocd-ingress-values.yaml && break
+           n=$((n+1))
+           echo "Deploy failed (attempt $n/3). Retrying in 10s..."
+           sleep 10
+        done
+        
+        if [ "$n" -eq 3 ]; then
+           echo "ArgoCD helm upgrade failed after 3 attempts."
+           exit 1
         fi
         
         echo "Waiting for ArgoCD Redis Secret Init Job..."
