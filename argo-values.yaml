@@ -2013,7 +2013,9 @@ server:
   imagePullSecrets: []
 
   # -- Additional command line arguments to pass to Argo CD server
-  extraArgs: []
+  extraArgs:
+    - --insecure
+    - --rootpath=/argocd
 
   # -- Environment variables to pass to Argo CD server
   env: []
@@ -2414,7 +2416,7 @@ server:
   # Argo CD server ingress configuration
   ingress:
     # -- Enable an ingress resource for the Argo CD server
-    enabled: false
+    enabled: true
     # -- Specific implementation for ingress controller. One of `generic`, `aws` or `gke`
     ## Additional configuration might be required in related configuration sections
     controller: generic
@@ -2422,22 +2424,22 @@ server:
     labels: {}
     # -- Additional ingress annotations
     ## Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough
-    annotations: {}
-      # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      
     # -- Defines which ingress controller will implement the resource
-    ingressClassName: ""
+    ingressClassName: "nginx"
 
     # -- Argo CD server hostname
     # @default -- `""` (defaults to global.domain)
-    hostname: ""
+    hostname: "argocd.example.com"
 
     # -- The path to Argo CD server
-    path: /
+    path: /argocd(/|$)(.*)
 
     # -- Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific`
-    pathType: Prefix
+    pathType: ImplementationSpecific
 
     # -- Enable TLS configuration for the hostname defined at `server.ingress.hostname`
     ## TLS certificate will be retrieved from a TLS secret `argocd-server-tls`
