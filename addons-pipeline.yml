@@ -386,6 +386,8 @@ jobs:
             type: ClusterIP
           ingress:
             enabled: true
+            hosts:
+              - ""
             ingressClassName: nginx
             paths:
               - /argocd(/|$)(.*)
