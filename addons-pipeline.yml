@@ -317,24 +317,24 @@ jobs:
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
         cat > vault-ingress-values.yaml <<EOF
-server:
-  ha:
-    enabled: false
-    replicas: 1
-  service:
-    type: ClusterIP
-  ingress:
-    enabled: true
-    ingressClassName: nginx
-    hosts:
-      - host: ""
-        paths:
-          - /vault
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-ui:
-  enabled: true
-EOF
+        server:
+          ha:
+            enabled: false
+            replicas: 1
+          service:
+            type: ClusterIP
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - host: ""
+                paths:
+                  - /vault
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: /
+        ui:
+          enabled: true
+        EOF
         
         helm upgrade --install vault vault \
           --repo https://helm.releases.hashicorp.com \
@@ -368,32 +368,32 @@ EOF
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
         cat > argocd-ingress-values.yaml <<EOF
-redis-ha:
-  enabled: false
-controller:
-  replicas: 1
-server:
-  replicas: 1
-  service:
-    type: ClusterIP
-  ingress:
-    enabled: true
-    ingressClassName: nginx
-    hosts:
-      - ""
-    paths:
-      - /argocd
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-      nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-  extraArgs:
-    - --insecure
-    - --rootpath=/argocd
-repoServer:
-  replicas: 1
-applicationController:
-  replicas: 1
-EOF
+        redis-ha:
+          enabled: false
+        controller:
+          replicas: 1
+        server:
+          replicas: 1
+          service:
+            type: ClusterIP
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - ""
+            paths:
+              - /argocd
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: /
+              nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+          extraArgs:
+            - --insecure
+            - --rootpath=/argocd
+        repoServer:
+          replicas: 1
+        applicationController:
+          replicas: 1
+        EOF
         
         # Cleanup potential stuck jobs from previous failed installs
         # kubectl delete job -n bahi argocd-redis-secret-init --ignore-not-found=true
