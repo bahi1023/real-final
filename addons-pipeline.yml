@@ -369,14 +369,6 @@ jobs:
         
         echo "Installing Argo CD..."
         
-        # Manually create Redis secret since we are skipping hooks
-        if ! kubectl get secret argocd-redis -n bahi > /dev/null 2>&1; then
-            echo "Creating argocd-redis secret manually..."
-            kubectl create secret generic argocd-redis -n bahi \
-              --from-literal=auth=$(openssl rand -base64 32) \
-              --from-literal=redis-password=$(openssl rand -base64 32)
-        fi
-        
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
         cat > argocd-ingress-values.yaml <<EOF
         redis-ha:
@@ -413,7 +405,6 @@ jobs:
           --repo https://argoproj.github.io/argo-helm \
           --namespace bahi --create-namespace \
           --timeout 10m \
-          --no-hooks \
           -f argocd-ingress-values.yaml; then
             echo "ArgoCD helm upgrade failed."
             exit 1
