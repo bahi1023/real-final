@@ -385,16 +385,7 @@ jobs:
           service:
             type: ClusterIP
           ingress:
-            enabled: true
-            hosts:
-              - ""
-            ingressClassName: nginx
-            paths:
-              - /argocd(/|$)(.*)
-            annotations:
-              nginx.ingress.kubernetes.io/rewrite-target: /$2
-              nginx.ingress.kubernetes.io/backend-protocol: HTTP
-              nginx.ingress.kubernetes.io/use-regex: "true"
+            enabled: false
           extraArgs:
             - --insecure
             - --rootpath=/argocd
@@ -427,6 +418,31 @@ jobs:
            echo "ArgoCD helm upgrade failed after 3 attempts."
            exit 1
         fi
+        
+        echo "Applying standalone ArgoCD Ingress..."
+        kubectl apply -f - <<'INGRESS_EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: bahi
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /argocd(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
+INGRESS_EOF
         
         echo "Waiting for ArgoCD Redis Secret Init Job..."
         # Wait up to 5 minutes for the job to complete
