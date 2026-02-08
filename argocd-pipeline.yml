@@ -71,7 +71,7 @@ jobs:
           --docker-server=https://index.docker.io/v1/ \
           --docker-username="$DOCKER_USER" \
           --docker-password="$DOCKER_PASSWORD" \
-          --docker-email=example@example.com
+          --docker-email=bebomohammed904@gmail.com
         
         # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
         if ! command -v helm &> /dev/null; then
@@ -79,10 +79,6 @@ jobs:
             curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
         fi
 
-        echo "Deploying Motivational App..."
-        # Using the motivational-app chart we created
-        # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
-        
         echo "Deploying Motivational App..."
         # Using the motivational-app chart we created
         # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
