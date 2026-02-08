@@ -320,6 +320,11 @@ jobs:
         kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
         kubectl delete clusterrole argocd-application-controller --ignore-not-found=true
         kubectl delete clusterrolebinding argocd-application-controller --ignore-not-found=true
+        # Delete ArgoCD CRDs to avoid ownership conflicts
+        kubectl delete crd applications.argoproj.io --ignore-not-found=true
+        kubectl delete crd appprojects.argoproj.io --ignore-not-found=true
+        kubectl delete crd argocdextensions.argoproj.io --ignore-not-found=true
+        kubectl delete crd applicationsets.argoproj.io --ignore-not-found=true
         
         echo "Installing Vault..."
         
