@@ -316,10 +316,16 @@ jobs:
         kubectl delete clusterrolebinding vault-server-binding --ignore-not-found=true
         
         # Delete old ArgoCD resources
-        kubectl delete clusterrole argocd-server --ignore-not-found=true
-        kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
         kubectl delete clusterrole argocd-application-controller --ignore-not-found=true
         kubectl delete clusterrolebinding argocd-application-controller --ignore-not-found=true
+        kubectl delete clusterrole argocd-server --ignore-not-found=true
+        kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
+        kubectl delete clusterrole argocd-notifications-controller --ignore-not-found=true
+        kubectl delete clusterrolebinding argocd-notifications-controller --ignore-not-found=true
+        kubectl delete clusterrole argocd-redis-ha --ignore-not-found=true
+        kubectl delete clusterrolebinding argocd-redis-ha --ignore-not-found=true
+        kubectl delete clusterrole argocd-repo-server --ignore-not-found=true
+        kubectl delete clusterrolebinding argocd-repo-server --ignore-not-found=true
         # Delete ArgoCD CRDs to avoid ownership conflicts
         kubectl delete crd applications.argoproj.io --ignore-not-found=true
         kubectl delete crd appprojects.argoproj.io --ignore-not-found=true
