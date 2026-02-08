@@ -350,6 +350,7 @@ jobs:
           --set server.service.type=ClusterIP \
           --set server.ingress.enabled=true \
           --set server.ingress.ingressClassName=nginx \
+          --set server.ingress.hosts[0]="" \
           --set "server.ingress.paths[0]=/argoCD" \
           --set "server.extraArgs={--insecure,--rootpath=/argoCD}"
 
