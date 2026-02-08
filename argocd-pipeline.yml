@@ -79,7 +79,8 @@ jobs:
         helm upgrade --install motivational-app ./motivational-app \
           --namespace default \
           --set image.tag="$(Build.BuildId)" \
-          --wait --timeout 5m
+          --wait --timeout 10m \
+          --debug
 
         echo "Forcing restart of application deployment to ensure latest image..."
         # The chart creates a deployment named 'simple-web-app' (from values.yaml fullnameOverride)
