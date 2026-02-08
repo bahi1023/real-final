@@ -71,10 +71,18 @@ jobs:
         echo "Deploying Motivational App..."
         # Using the motivational-app chart we created
         # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
+        
+        # Check for stuck release and rollback if necessary
+        if helm status motivational-app -n default | grep -q 'pending-'; then
+            echo "Release is stuck in pending state. Rolling back..."
+            helm rollback motivational-app -n default || true
+        fi
+        
         helm upgrade --install motivational-app ./motivational-app \
           --namespace default \
           --set image.tag="$(Build.BuildId)" \
-          --wait --timeout 5m
+          --wait --timeout 5m \
+          --atomic
 
         echo "Forcing restart of application deployment to ensure latest image..."
         # The chart creates a deployment named 'simple-web-app' (from values.yaml fullnameOverride)
