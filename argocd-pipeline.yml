@@ -70,8 +70,10 @@ jobs:
 
         echo "Deploying Motivational App..."
         # Using the motivational-app chart we created
+        # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
         helm upgrade --install motivational-app ./motivational-app \
           --namespace default \
+          --set image.tag="$(Build.BuildId)" \
           --wait --timeout 5m
 
         echo "Forcing restart of application deployment to ensure latest image..."

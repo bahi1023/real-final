@@ -1,11 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY ./requirements.txt .
+# Create the python script for the web server
+RUN echo "\
+from http.server import HTTPServer, BaseHTTPRequestHandler\n\
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):\n\
+    def do_GET(self):\n\
+        self.send_response(200)\n\
+        self.end_headers()\n\
+        self.wfile.write(b'Hello from Simple Web App (Docker Image)!')\n\
+httpd = HTTPServer(('0.0.0.0', 8080), SimpleHTTPRequestHandler)\n\
+httpd.serve_forever()\n\
+" > app.py
 
-RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 8080
 
-COPY . .
-
-CMD ["gunicorn", "--timeout", "120", "--bind", "0.0.0.0:7000", "app:app"]
+CMD ["python", "app.py"]
