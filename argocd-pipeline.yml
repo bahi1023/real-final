@@ -74,9 +74,6 @@ jobs:
         else
             echo "'regcred' secret already exists."
         fi
-    env:
-      DOCKER_USER: $(DOCKER_USER)
-      DOCKER_PASSWORD: $(DOCKER_PASSWORD)
         
         # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
         if ! command -v helm &> /dev/null; then
@@ -110,3 +107,6 @@ jobs:
         
         echo "Checking rollout status..."
         kubectl rollout status deployment/simple-web-app -n default
+    env:
+      DOCKER_USER: $(DOCKER_USER)
+      DOCKER_PASSWORD: $(DOCKER_PASSWORD)
