@@ -454,8 +454,14 @@ jobs:
         sonarWebContext: /sonarqube
         EOF
 
-        helm upgrade --install sonarqube sonarqube \
+        if ! helm upgrade --install sonarqube sonarqube \
           --repo https://SonarSource.github.io/helm-chart-sonarqube \
           --namespace bahi --create-namespace \
           --wait --timeout 10m \
-          -f sonarqube-values.yaml
+          -f sonarqube-values.yaml; then
+            echo "SonarQube installation failed. Debugging..."
+            kubectl get pods -n bahi -l app=sonarqube
+            kubectl describe pods -n bahi -l app=sonarqube
+            kubectl logs -n bahi -l app=sonarqube --tail=100
+            exit 1
+        fi
