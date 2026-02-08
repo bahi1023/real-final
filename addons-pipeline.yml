@@ -309,12 +309,10 @@ jobs:
         AWS_BIN=$(which aws)
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
 
-        echo "Cleaning up potential old Vault/ArgoCD resources..."
-        # Delete old Vault resources
-        kubectl delete clusterrole vault-agent-injector-clusterrole --ignore-not-found=true
-        kubectl delete clusterrolebinding vault-agent-injector-binding --ignore-not-found=true
-        kubectl delete clusterrolebinding vault-server-binding --ignore-not-found=true
-  
+        # 3. Patch Kubeconfig
+        AWS_BIN=$(which aws)
+        sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
+
         echo "Installing Vault..."
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
@@ -363,23 +361,6 @@ jobs:
         AWS_BIN=$(which aws)
         sed -i "s|command: aws|command: $AWS_BIN|g" ~/.kube/config || true
         
-        # echo "Cleaning up potential old ArgoCD resources..."
-        # kubectl delete clusterrole argocd-application-controller --ignore-not-found=true
-        # kubectl delete clusterrolebinding argocd-application-controller --ignore-not-found=true
-        # kubectl delete clusterrole argocd-server --ignore-not-found=true
-        # kubectl delete clusterrolebinding argocd-server --ignore-not-found=true
-        # kubectl delete clusterrole argocd-notifications-controller --ignore-not-found=true
-        # kubectl delete clusterrolebinding argocd-notifications-controller --ignore-not-found=true
-        # kubectl delete clusterrole argocd-redis-ha --ignore-not-found=true
-        # kubectl delete clusterrolebinding argocd-redis-ha --ignore-not-found=true
-        # kubectl delete clusterrole argocd-repo-server --ignore-not-found=true
-        # kubectl delete clusterrolebinding argocd-repo-server --ignore-not-found=true
-        # # Delete ArgoCD CRDs to avoid ownership conflicts
-        # kubectl delete crd applications.argoproj.io --ignore-not-found=true
-        # kubectl delete crd appprojects.argoproj.io --ignore-not-found=true
-        # kubectl delete crd argocdextensions.argoproj.io --ignore-not-found=true
-        # kubectl delete crd applicationsets.argoproj.io --ignore-not-found=true
-
         echo "Installing Argo CD..."
         
         # Create values.yaml to avoid quoting issues with --set (like SonarQube)
