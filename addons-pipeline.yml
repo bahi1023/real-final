@@ -406,11 +406,20 @@ jobs:
             - --rootpath=/argocd
         EOF
         
-        helm upgrade --install argocd argo-cd \
+        # Cleanup potential stuck jobs from previous failed installs
+        kubectl delete job -n bahi argocd-redis-secret-init --ignore-not-found=true
+        
+        if ! helm upgrade --install argocd argo-cd \
           --repo https://argoproj.github.io/argo-helm \
           --namespace bahi --create-namespace \
           --wait --timeout 5m \
-          -f argocd-ingress-values.yaml
+          -f argocd-ingress-values.yaml; then
+            echo "ArgoCD installation failed. Debugging..."
+            kubectl get pods -n bahi
+            kubectl describe job -n bahi argocd-redis-secret-init || true
+            kubectl logs -n bahi -l job-name=argocd-redis-secret-init --tail=100 || true
+            exit 1
+        fi
 
   # 9. Install SonarQube
   - task: AWSShellScript@1
