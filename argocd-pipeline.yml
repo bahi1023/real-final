@@ -7,8 +7,7 @@ variables:
   AWS_REGION: 'us-east-1'
   # OPTIMIZATION: We assume CLUSTER_NAME is provided as a pipeline variable
   CLUSTER_NAME: 'eks-platform-nonprod-v2-cluster'
-  # Docker service connection - this makes credentials available as env vars
-  DOCKER_REGISTRY_SERVICE_CONNECTION: 'docker'
+
 
 # pool:
 #   vmImage: ubuntu-latest
@@ -159,11 +158,7 @@ jobs:
         else
           echo "Warning: Could not find deployment for motivational-app"
         fi
-    env:
-      # Azure DevOps exposes Docker service connection credentials with these variable names
-      # Reference: https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints
-      DOCKER_USERNAME: $(DOCKER_REGISTRY_SERVICE_CONNECTION_USERNAME)
-      DOCKER_PASSWORD: $(DOCKER_REGISTRY_SERVICE_CONNECTION_PASSWORD)
+
 
 
 
