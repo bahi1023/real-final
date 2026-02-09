@@ -62,28 +62,25 @@ jobs:
            exit 0
         fi
 
-        # Create Docker Registry Secret (regcred) - FORCE UPDATE
+        # Create Docker Registry Secret (regcred) in bahi namespace - FORCE UPDATE
         # Delete existing secret to ensure we use the latest credentials
-        kubectl delete secret regcred -n default --ignore-not-found=true
+        kubectl delete secret regcred -n bahi --ignore-not-found=true
         
-        echo "Creating 'regcred' secret for Docker Registry..."
+        echo "Creating 'regcred' secret for Docker Registry in bahi namespace..."
         kubectl create secret docker-registry regcred \
+          --namespace bahi \
           --docker-server=https://index.docker.io/v1/ \
           --docker-username="$DOCKER_USER" \
           --docker-password="$DOCKER_PASSWORD" \
           --docker-email=bebomohammed904@gmail.com
         
         # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
-        # 0. Clean up old deployment in default namespace to avoid duplication
-        echo "Checking for old deployment in default namespace..."
-        helm uninstall motivational-app -n default 2>/dev/null || true
-        
         if ! command -v helm &> /dev/null; then
             echo "Installing Helm..."
             curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
         fi
 
-        echo "Deploying Helm Chart..."
+        echo "Deploying Helm Chart to bahi namespace..."
         # Using the motivational-app chart we created
         # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
         
@@ -92,17 +89,23 @@ jobs:
           --set image.tag="latest" \
           --wait --timeout 10m \
           --debug; then
-            echo "Helm upgrade failed. debugging..."
-            kubectl logs -n default -l app.kubernetes.io/instance=motivational-app --tail=50
+            echo "Helm upgrade failed. Debugging..."
+            kubectl get pods -n bahi -l app.kubernetes.io/instance=motivational-app
+            kubectl logs -n bahi -l app.kubernetes.io/instance=motivational-app --tail=50
             exit 1
         fi
 
         echo "Forcing restart of application deployment to ensure latest image..."
-        # The chart creates a deployment named 'simple-web-app' (from values.yaml fullnameOverride)
-        kubectl rollout restart deployment/simple-web-app -n default
+        # Use label selector to dynamically find the deployment created by Helm
+        kubectl rollout restart deployment -n bahi -l app.kubernetes.io/instance=motivational-app
         
         echo "Checking rollout status..."
-        kubectl rollout status deployment/simple-web-app -n default
+        DEPLOYMENT_NAME=$(kubectl get deployment -n bahi -l app.kubernetes.io/instance=motivational-app -o jsonpath='{.items[0].metadata.name}')
+        if [ -n "$DEPLOYMENT_NAME" ]; then
+          kubectl rollout status deployment/$DEPLOYMENT_NAME -n bahi
+        else
+          echo "Warning: Could not find deployment for motivational-app"
+        fi
     env:
       DOCKER_USER: $(DOCKER_USER)
       DOCKER_PASSWORD: $(DOCKER_PASSWORD)
