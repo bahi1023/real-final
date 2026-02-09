@@ -31,8 +31,8 @@ resource "aws_cognito_user_pool_client" "client" {
 
   generate_secret = true
 
-  callback_urls = ["${var.nlb_dns_name}/oauth2/callback"]
-  logout_urls   = ["${var.nlb_dns_name}/"]
+  callback_urls = ["${aws_apigatewayv2_api.main.api_endpoint}/oauth2/callback"]
+  logout_urls   = ["${aws_apigatewayv2_api.main.api_endpoint}/"]
 
   supported_identity_providers = ["COGNITO"]
 
