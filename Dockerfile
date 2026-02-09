@@ -11,7 +11,7 @@ HTML_CONTENT = """<!DOCTYPE html>\n\
 <head>\n\
     <meta charset="UTF-8">\n\
     <meta name="viewport" content="width=device-width, initial-scale=1.0">\n\
-    <title>DevOps Platform</title>\n\
+    <title>bahi devops</title>\n\
     <style>\n\
         * { margin: 0; padding: 0; box-sizing: border-box; }\n\
         body {\n\
@@ -109,10 +109,10 @@ HTML_CONTENT = """<!DOCTYPE html>\n\
         <div class="badge">✨ Powered by Kubernetes & Docker</div>\n\
         <div class="status">\n\
             <div class="status-item">\n\
-                <span class="pulse"></span>Container Running\n\
+                <span class="pulse"></span>Container Running (bahi)\n\
             </div>\n\
             <div class="status-item">\n\
-                <span class="pulse"></span>All Systems Go\n\
+                <span class="pulse"></span>All Systems Go(bahi)\n\
             </div>\n\
         </div>\n\
     </div>\n\
