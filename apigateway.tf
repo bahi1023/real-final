@@ -49,10 +49,8 @@ resource "aws_apigatewayv2_integration" "nlb_proxy" {
 }
 resource "aws_apigatewayv2_route" "default" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "ANY /{proxy+}"
+  route_key = "$default"
   target    = "integrations/${aws_apigatewayv2_integration.nlb_proxy.id}"
 
   authorization_type = "NONE"
-  # authorization_type = "JWT"
-  # authorizer_id      = aws_apigatewayv2_authorizer.jwt.id
 }
