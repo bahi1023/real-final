@@ -229,7 +229,7 @@ jobs:
   
   # 6. Install OAuth2-Proxy
   - task: AWSShellScript@1
-    displayName: Install OAuth2-Proxy
+    displayName: I  
     inputs:
       awsCredentials: $(AWS_SERVICE_CONNECTION)
       regionName: $(AWS_REGION)
