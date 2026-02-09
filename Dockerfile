@@ -104,7 +104,7 @@ HTML_CONTENT = """<!DOCTYPE html>\n\
 <body>\n\
     <div class="container">\n\
         <div class="emoji">🚀</div>\n\
-        <h1>DevOps Platform</h1>\n\
+        <h1>DevOps bahi</h1>\n\
         <p>Your infrastructure is <strong>live</strong> and running smoothly!</p>\n\
         <div class="badge">✨ Powered by Kubernetes & Docker</div>\n\
         <div class="status">\n\
@@ -112,7 +112,7 @@ HTML_CONTENT = """<!DOCTYPE html>\n\
                 <span class="pulse"></span>Container Running (bahi)\n\
             </div>\n\
             <div class="status-item">\n\
-                <span class="pulse"></span>All Systems Go(bahi)\n\
+                <span class="pulse"></span>All Systems(bahi)\n\
             </div>\n\
         </div>\n\
     </div>\n\
