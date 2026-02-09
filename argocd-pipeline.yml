@@ -62,12 +62,24 @@ jobs:
            exit 0
         fi
 
+        # Read Docker credentials from service connection
+        # Azure DevOps stores credentials in DOCKER_REGISTRY_SERVICE_CONNECTION environment variable
+        # or we can use the service connection directly via pipeline variables
+        echo "Reading Docker credentials from service connection..."
+        DOCKER_USERNAME="${DOCKER_USERNAME:-}"
+        DOCKER_PASSWORD="${DOCKER_PASSWORD:-}"
+        
+        if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+          echo "ERROR: Docker credentials not found in environment variables"
+          echo "Please ensure DOCKER_USERNAME and DOCKER_PASSWORD are set via service connection"
+          exit 1
+        fi
+
         # Create Docker Registry Secret (regcred) in bahi namespace - FORCE UPDATE
         # Delete existing secret to ensure we use the latest credentials
         kubectl delete secret regcred -n bahi --ignore-not-found=true
         
         echo "Creating 'regcred' secret for Docker Registry in bahi namespace..."
-        # Using credentials from Docker service endpoint (passed as env vars)
         kubectl create secret docker-registry regcred \
           --namespace bahi \
           --docker-server=https://index.docker.io/v1/ \
@@ -108,5 +120,6 @@ jobs:
           echo "Warning: Could not find deployment for motivational-app"
         fi
     env:
-      DOCKER_USERNAME: $(DOCKER_REGISTRY_SERVICE_CONNECTION.username)
-      DOCKER_PASSWORD: $(DOCKER_REGISTRY_SERVICE_CONNECTION.password)
+      DOCKER_USERNAME: $(DOCKER_USERNAME)
+      DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+
