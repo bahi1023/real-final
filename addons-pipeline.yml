@@ -159,25 +159,25 @@ jobs:
         echo "Reading Terraform outputs..."
   
         # Safely read Terraform outputs
-        # COGNITO_CLIENT_ID=$(terraform output -raw cognito_client_id || echo "")
-        # COGNITO_CLIENT_SECRET=$(terraform output -raw cognito_client_secret || echo "")
-        # COGNITO_ISSUER_URL=$(terraform output -raw cognito_issuer_url || echo "")
+        COGNITO_CLIENT_ID=$(terraform output -raw cognito_client_id || echo "")
+        COGNITO_CLIENT_SECRET=$(terraform output -raw cognito_client_secret || echo "")
+        COGNITO_ISSUER_URL=$(terraform output -raw cognito_issuer_url || echo "")
         CLUSTER_NAME=$(terraform output -raw cluster_name || echo "")
   
-        # if [ -z "$COGNITO_CLIENT_ID" ] || [ -z "$COGNITO_CLIENT_SECRET" ]; then
-        #   echo "##[error]Failed to read Cognito outputs from Terraform"
-        #   terraform output
-        #   exit 1
-        # fi
+        if [ -z "$COGNITO_CLIENT_ID" ] || [ -z "$COGNITO_CLIENT_SECRET" ]; then
+          echo "##[error]Failed to read Cognito outputs from Terraform"
+          terraform output
+          exit 1
+        fi
   
         # Generate proper cookie secret (24 bytes base64 encoded = 32 chars)
-        # COOKIE_SECRET=$(openssl rand -base64 24)
+        COOKIE_SECRET=$(openssl rand -base64 24)
   
         # Set pipeline variables
-        # echo "##vso[task.setvariable variable=COGNITO_CLIENT_ID;isSecret=true]$COGNITO_CLIENT_ID"
-        # echo "##vso[task.setvariable variable=COGNITO_CLIENT_SECRET;isSecret=true]$COGNITO_CLIENT_SECRET"
-        # echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
-        # echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
+        echo "##vso[task.setvariable variable=COGNITO_CLIENT_ID;isSecret=true]$COGNITO_CLIENT_ID"
+        echo "##vso[task.setvariable variable=COGNITO_CLIENT_SECRET;isSecret=true]$COGNITO_CLIENT_SECRET"
+        echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
+        echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
   
         # Refresh kubeconfig
         if [ -z "$CLUSTER_NAME" ]; then
@@ -228,52 +228,52 @@ jobs:
         grep -v "data" ~/.kube/config || true
   
   # 6. Install OAuth2-Proxy
-  # - task: AWSShellScript@1
-  #   displayName: Install OAuth2-Proxy
-  #   inputs:
-  #     awsCredentials: $(AWS_SERVICE_CONNECTION)
-  #     regionName: $(AWS_REGION)
-  #     scriptType: inline
-  #     inlineScript: |
-  #       set -euo pipefail
+  - task: AWSShellScript@1
+    displayName: Install OAuth2-Proxy
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
         
-  #       echo "Installing OAuth2-Proxy..."
+        echo "Installing OAuth2-Proxy..."
         
-  #       # Function to run on failure
-  #       handle_error() {
-  #         echo "##[error] OAuth2-Proxy deployment failed!"
-  #         echo "Fetching debug logs..."
-  #         kubectl get all -n ingress-nginx
-  #         kubectl describe pod -l app.kubernetes.io/name=oauth2-proxy -n ingress-nginx || true
-  #         kubectl logs -l app.kubernetes.io/name=oauth2-proxy -n ingress-nginx --all-containers --tail=100 || true
-  #         kubectl get events -n ingress-nginx --sort-by='.lastTimestamp' || true
-  #       }
+        # Function to run on failure
+        handle_error() {
+          echo "##[error] OAuth2-Proxy deployment failed!"
+          echo "Fetching debug logs..."
+          kubectl get all -n ingress-nginx
+          kubectl describe pod -l app.kubernetes.io/name=oauth2-proxy -n ingress-nginx || true
+          kubectl logs -l app.kubernetes.io/name=oauth2-proxy -n ingress-nginx --all-containers --tail=100 || true
+          kubectl get events -n ingress-nginx --sort-by='.lastTimestamp' || true
+        }
         
-  #       # Set up trap to call handle_error on script failure
-  #       trap 'handle_error' ERR
+        # Set up trap to call handle_error on script failure
+        trap 'handle_error' ERR
 
-  #       helm upgrade --install oauth2-proxy oauth2-proxy \
-  #         --repo https://oauth2-proxy.github.io/manifests \
-  #         --namespace ingress-nginx --create-namespace \
-  #         --wait --timeout 10m \
-  #         --set config.clientID="$COGNITO_CLIENT_ID" \
-  #         --set config.clientSecret="$COGNITO_CLIENT_SECRET" \
-  #         --set config.cookieSecret="$COOKIE_SECRET" \
-  #         --set extraArgs.provider="oidc" \
-  #         --set extraArgs.oidc-issuer-url="$COGNITO_ISSUER_URL" \
-  #         --set extraArgs.email-domain="gmail.com" \
-  #         --set extraArgs.upstream="file:///dev/null" \
-  #         --set extraArgs.http-address="0.0.0.0:4180" \
-  #         # <--- THIS SECTION LINKS THE APP TO THE LOAD BALANCER (via Ingress Class "nginx")
-  #         --set ingress.enabled=true \
-  #         --set ingress.className="nginx" \
-  #         --set ingress.path="/oauth2" \
-  #         --set ingress.hosts[0]=""
-  #   env:
-  #     COGNITO_CLIENT_ID: $(COGNITO_CLIENT_ID)
-  #     COGNITO_CLIENT_SECRET: $(COGNITO_CLIENT_SECRET)
-  #     COGNITO_ISSUER_URL: $(COGNITO_ISSUER_URL)
-  #     COOKIE_SECRET: $(COOKIE_SECRET)
+        helm upgrade --install oauth2-proxy oauth2-proxy \
+          --repo https://oauth2-proxy.github.io/manifests \
+          --namespace ingress-nginx --create-namespace \
+          --wait --timeout 10m \
+          --set config.clientID="$COGNITO_CLIENT_ID" \
+          --set config.clientSecret="$COGNITO_CLIENT_SECRET" \
+          --set config.cookieSecret="$COOKIE_SECRET" \
+          --set extraArgs.provider="oidc" \
+          --set extraArgs.oidc-issuer-url="$COGNITO_ISSUER_URL" \
+          --set extraArgs.email-domain="gmail.com" \
+          --set extraArgs.upstream="file:///dev/null" \
+          --set extraArgs.http-address="0.0.0.0:4180" \
+          # <--- THIS SECTION LINKS THE APP TO THE LOAD BALANCER (via Ingress Class "nginx")
+          --set ingress.enabled=true \
+          --set ingress.className="nginx" \
+          --set ingress.path="/oauth2" \
+          --set ingress.hosts[0]=""
+    env:
+      COGNITO_CLIENT_ID: $(COGNITO_CLIENT_ID)
+      COGNITO_CLIENT_SECRET: $(COGNITO_CLIENT_SECRET)
+      COGNITO_ISSUER_URL: $(COGNITO_ISSUER_URL)
+      COOKIE_SECRET: $(COOKIE_SECRET)
 
   # 7. Install Vault
   
