@@ -120,8 +120,10 @@ jobs:
           echo "Warning: Could not find deployment for motivational-app"
         fi
     env:
-      # Read credentials from Docker service connection named 'docker'
-      DOCKER_USERNAME: $(docker.username)
-      DOCKER_PASSWORD: $(docker.password)
+      # Azure DevOps exposes Docker service connection credentials with these variable names
+      # Reference: https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints
+      DOCKER_USERNAME: $(DOCKER_REGISTRY_SERVICE_CONNECTION_USERNAME)
+      DOCKER_PASSWORD: $(DOCKER_REGISTRY_SERVICE_CONNECTION_PASSWORD)
+
 
 
