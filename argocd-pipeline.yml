@@ -120,6 +120,8 @@ jobs:
           echo "Warning: Could not find deployment for motivational-app"
         fi
     env:
-      DOCKER_USERNAME: $(DOCKER_USERNAME)
-      DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+      # Read credentials from Docker service connection named 'docker'
+      DOCKER_USERNAME: $(docker.username)
+      DOCKER_PASSWORD: $(docker.password)
+
 
