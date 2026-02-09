@@ -67,11 +67,12 @@ jobs:
         kubectl delete secret regcred -n bahi --ignore-not-found=true
         
         echo "Creating 'regcred' secret for Docker Registry in bahi namespace..."
+        # Note: Using pipeline variables directly - they will be expanded by Azure DevOps before script execution
         kubectl create secret docker-registry regcred \
           --namespace bahi \
           --docker-server=https://index.docker.io/v1/ \
-          --docker-username="$DOCKER_USER" \
-          --docker-password="$DOCKER_PASSWORD" \
+          --docker-username='$(DOCKER_USER)' \
+          --docker-password='$(DOCKER_PASSWORD)' \
           --docker-email=bebomohammed904@gmail.com
         
         # Ensure Helm is installed (if not already by previous stages, but good to be safe/consistent)
