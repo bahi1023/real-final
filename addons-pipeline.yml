@@ -265,6 +265,7 @@ jobs:
           --set extraArgs.email-domain="gmail.com" \
           --set extraArgs.upstream="file:///dev/null" \
           --set extraArgs.http-address="0.0.0.0:4180" \
+          --set extraArgs.redirect-url="https://l016y2xqz8.execute-api.us-east-1.amazonaws.com/oauth2/callback" \
           --set ingress.enabled=true \
           --set ingress.className="nginx" \
           --set ingress.path="/oauth2" \
