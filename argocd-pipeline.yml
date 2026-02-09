@@ -158,6 +158,8 @@ jobs:
         else
           echo "Warning: Could not find deployment for motivational-app"
         fi
+    env:
+      DOCKER_PASSWORD: $(DOCKER_PASSWORD)
 
 
 
