@@ -41,11 +41,11 @@ resource "aws_apigatewayv2_integration" "nlb_proxy" {
   api_id           = aws_apigatewayv2_api.main.id
   integration_type = "HTTP_PROXY"
   
-  # This variable is updated by the pipeline (sed) after Helm creates the LB
   integration_uri  = var.nlb_dns_name 
   
   integration_method = "ANY"
-  connection_type    = "INTERNET"
+  connection_type    = "VPC_LINK"
+  connection_id      = aws_apigatewayv2_vpc_link.main.id
 
   lifecycle {
     ignore_changes = [integration_uri]
