@@ -143,10 +143,17 @@ jobs:
         # Using the motivational-app chart we created
         # Injecting the BuildId as the image tag so it pulls the artifacts built in Release Pipeline
         
+        # Create a dynamic values file to avoid --set quoting/escaping issues with dots in annotation keys
+        cat <<EOF > dynamic-values.yaml
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-signin: "${APIGW_URL}/oauth2/start?rd=\$escaped_request_uri"
+EOF
+
         if ! helm upgrade --install motivational-app ./motivational-app \
           --namespace bahi --create-namespace \
           --set image.tag="latest" \
-          --set ingress.annotations."nginx\.ingress\.kubernetes_io/auth-signin"="${APIGW_URL}/oauth2/start?rd=\$escaped_request_uri" \
+          -f dynamic-values.yaml \
           --wait --timeout 10m \
           --debug; then
             echo "Helm upgrade failed. Debugging..."
