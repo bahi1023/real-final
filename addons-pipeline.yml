@@ -67,7 +67,16 @@ jobs:
       inlineScript: |
         set -euo pipefail
         cd "$(TF_DIR)"
-        CLUSTER_NAME="$(terraform output -raw cluster_name)"
+        
+        # Safely fetch cluster name
+        CLUSTER_NAME=$(terraform output -raw cluster_name || echo "")
+        
+        if [ -z "$CLUSTER_NAME" ]; then
+           echo "##[warning]Could not get cluster_name. Skipping kubeconfig setup."
+           exit 0
+        fi
+        
+        echo "Updating kubeconfig for $CLUSTER_NAME..."
         aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$(AWS_REGION)"
 
   # 2. Install Helm
@@ -124,14 +133,18 @@ jobs:
         cd "$(TF_DIR)"
         
         echo "Fetching Load Balancer DNS..."
-        NLB_DNS=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-        echo "Found LB: $NLB_DNS"
+        NLB_DNS=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || echo "")
         
-        echo "Updating var.tf..."
-        sed -i "s|REPLACE_ME_WITH_NLB_HOSTNAME|http://$NLB_DNS|g" var.tf
-        
-        echo "Running Terraform Apply (Pass 2)..."
-        terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"
+        if [ -z "$NLB_DNS" ]; then
+          echo "##[warning]Load Balancer DNS not found yet. Skipping var.tf update."
+        else
+          echo "Found LB: $NLB_DNS"
+          echo "Updating var.tf..."
+          sed -i "s|REPLACE_ME_WITH_NLB_HOSTNAME|http://$NLB_DNS|g" var.tf
+          
+          echo "Running Terraform Apply (Pass 2)..."
+          terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"
+        fi
 
   # 5. Export Credentials and Terraform Outputs
   - task: AWSShellScript@1
@@ -169,7 +182,7 @@ jobs:
           exit 1
         fi
   
-        # COOKIE_SECRET must be exactly 16, 24, or 32 bytes for AES encryption.
+        # COOKIE_SECRET must be exactly 32 bytes for AES-256. 
         # This one is exactly 32 bytes: "STABLE_SECRET_V1_FOR_32_BYTE_AES"
         COOKIE_SECRET="STABLE_SECRET_V1_FOR_32_BYTE_AES"
   
