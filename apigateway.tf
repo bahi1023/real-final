@@ -46,6 +46,10 @@ resource "aws_apigatewayv2_integration" "nlb_proxy" {
   
   integration_method = "ANY"
   connection_type    = "INTERNET"
+
+  lifecycle {
+    ignore_changes = [integration_uri]
+  }
 }
 resource "aws_apigatewayv2_route" "default" {
   api_id    = aws_apigatewayv2_api.main.id
