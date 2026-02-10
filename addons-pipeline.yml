@@ -269,11 +269,18 @@ jobs:
         # Set up trap to call handle_error on script failure
         trap 'handle_error' ERR
 
+        # FIX: Check for stuck Helm releases (e.g., pending-upgrade) and clear them
+        STATUS=$(helm status oauth2-proxy -n ingress-nginx -o json | jq -r .info.status || echo "not-found")
+        if [[ "$STATUS" == "pending-upgrade" || "$STATUS" == "pending-install" ]]; then
+          echo "##[warning] Found stuck Helm release (status: $STATUS). Clearing it..."
+          helm rollback oauth2-proxy -n ingress-nginx || helm uninstall oauth2-proxy -n ingress-nginx || true
+        fi
+
         # This installs OAuth2-Proxy and links it to the Load Balancer via Ingress Class "nginx"
         helm upgrade --install oauth2-proxy oauth2-proxy \
           --repo https://oauth2-proxy.github.io/manifests \
           --namespace ingress-nginx --create-namespace \
-          --wait --timeout 10m \
+          --wait --timeout 15m --atomic \
           --set config.clientID="$COGNITO_CLIENT_ID" \
           --set config.clientSecret="$COGNITO_CLIENT_SECRET" \
           --set config.cookieSecret="$COOKIE_SECRET" \
