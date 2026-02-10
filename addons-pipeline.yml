@@ -136,14 +136,11 @@ jobs:
         NLB_DNS=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || echo "")
         
         if [ -z "$NLB_DNS" ]; then
-          echo "##[warning]Load Balancer DNS not found yet. Skipping var.tf update."
+          echo "##[warning]Load Balancer DNS not found yet. Skipping API Gateway update."
         else
           echo "Found LB: $NLB_DNS"
-          echo "Updating var.tf..."
-          sed -i "s|REPLACE_ME_WITH_NLB_HOSTNAME|http://$NLB_DNS|g" var.tf
-          
-          echo "Running Terraform Apply (Pass 2)..."
-          terraform apply -auto-approve -var-file="$(TF_VAR_FILE)"
+          echo "Running Terraform Apply to sync API Gateway..."
+          terraform apply -auto-approve -var-file="$(TF_VAR_FILE)" -var="nlb_dns_name=http://$NLB_DNS"
         fi
 
   # 5. Export Credentials and Terraform Outputs
@@ -286,7 +283,7 @@ jobs:
           --set config.cookieSecret="$COOKIE_SECRET" \
           --set extraArgs.provider="oidc" \
           --set extraArgs.oidc-issuer-url="$COGNITO_ISSUER_URL" \
-          --set extraArgs.email-domain="gmail.com" \
+          --set extraArgs.email-domain="*" \
           --set extraArgs.upstream="file:///dev/null" \
           --set extraArgs.http-address="0.0.0.0:4180" \
           --set extraArgs.redirect-url="${APIGW_URL}/oauth2/callback" \
