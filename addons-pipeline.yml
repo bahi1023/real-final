@@ -178,7 +178,7 @@ jobs:
         echo "##vso[task.setvariable variable=COGNITO_CLIENT_SECRET;isSecret=true]$COGNITO_CLIENT_SECRET"
         echo "##vso[task.setvariable variable=COGNITO_ISSUER_URL]$COGNITO_ISSUER_URL"
         echo "##vso[task.setvariable variable=COOKIE_SECRET;isSecret=true]$COOKIE_SECRET"
-  
+   
         # Refresh kubeconfig
         if [ -z "$CLUSTER_NAME" ]; then
           echo "##[error]Could not get cluster_name from Terraform output!"
