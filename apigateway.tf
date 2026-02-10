@@ -41,7 +41,7 @@ resource "aws_apigatewayv2_integration" "nlb_proxy" {
   api_id           = aws_apigatewayv2_api.main.id
   integration_type = "HTTP_PROXY"
   
-  integration_uri  = var.nlb_dns_name 
+  integration_uri  = var.nlb_listener_arn == "" ? var.nlb_dns_name : var.nlb_listener_arn 
   
   integration_method = "ANY"
   connection_type    = "VPC_LINK"

@@ -41,6 +41,12 @@ variable "nlb_dns_name" {
   default     = "http://example.com"
 }
 
+variable "nlb_listener_arn" {
+  description = "The ARN of the Network Load Balancer Listener for VPC Link"
+  type        = string
+  default     = ""
+}
+
 # Added for IRSA
 variable "tags" {
   description = "A map of tags to add to all resources"

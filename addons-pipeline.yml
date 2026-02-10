@@ -139,8 +139,22 @@ jobs:
           echo "##[warning]Load Balancer DNS not found yet. Skipping API Gateway update."
         else
           echo "Found LB: $NLB_DNS"
+          
+          # Extract NLB Name from DNS (first part before the first dash)
+          NLB_NAME=$(echo $NLB_DNS | cut -d'-' -f1)
+          
+          echo "Fetching LB ARN for $NLB_NAME..."
+          LB_ARN=$(aws elbv2 describe-load-balancers --names "$NLB_NAME" --query 'LoadBalancers[0].LoadBalancerArn' --output text)
+          
+          echo "Fetching Listener ARN..."
+          # Fetch the first listener (usually port 80 for Nginx ingress)
+          LISTENER_ARN=$(aws elbv2 describe-listeners --load-balancer-arn "$LB_ARN" --query 'Listeners[0].ListenerArn' --output text)
+          
+          echo "Found Listener ARN: $LISTENER_ARN"
           echo "Running Terraform Apply to sync API Gateway..."
-          terraform apply -auto-approve -var-file="$(TF_VAR_FILE)" -var="nlb_dns_name=http://$NLB_DNS"
+          terraform apply -auto-approve -var-file="$(TF_VAR_FILE)" \
+            -var="nlb_dns_name=http://$NLB_DNS" \
+            -var="nlb_listener_arn=$LISTENER_ARN"
         fi
 
   # 5. Export Credentials and Terraform Outputs
