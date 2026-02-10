@@ -46,6 +46,13 @@ jobs:
 
         echo "Connecting to cluster: $(CLUSTER_NAME)..."
         aws eks update-kubeconfig --name "$(CLUSTER_NAME)" --region "$(AWS_REGION)"
+        
+        # Get API Gateway URL for ingress annotations
+        # Note: Since this pipeline doesn't run Terraform, we'll assume it's passed or fetch it from AWS
+        APIGW_URL=$(aws apigatewayv2 get-apis --query "Items[?Name=='eks-platform-nonprod-v2-api-v2-nonprod'].ApiEndpoint" --output text)
+        echo "Found API Gateway: $APIGW_URL"
+        echo "##vso[task.setvariable variable=APIGW_URL]$APIGW_URL"
+        
         echo "##vso[task.setvariable variable=CLUSTER_EXISTS]true"
 
   # 1.5. Docker Login (to utilize Service Connection)
@@ -139,6 +146,7 @@ jobs:
         if ! helm upgrade --install motivational-app ./motivational-app \
           --namespace bahi --create-namespace \
           --set image.tag="latest" \
+          --set ingress.annotations."nginx\.ingress\.kubernetes_io/auth-signin"="${APIGW_URL}/oauth2/start?rd=\$escaped_request_uri" \
           --wait --timeout 10m \
           --debug; then
             echo "Helm upgrade failed. Debugging..."
