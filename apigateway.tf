@@ -38,10 +38,12 @@ resource "aws_apigatewayv2_authorizer" "jwt" {
 }
 
 resource "aws_apigatewayv2_integration" "nlb_proxy" {
+  count = var.nlb_listener_arn == "" ? 0 : 1
+
   api_id           = aws_apigatewayv2_api.main.id
   integration_type = "HTTP_PROXY"
   
-  integration_uri  = var.nlb_listener_arn == "" ? var.nlb_dns_name : var.nlb_listener_arn 
+  integration_uri  = var.nlb_listener_arn 
   
   integration_method = "ANY"
   connection_type    = "VPC_LINK"
@@ -51,10 +53,13 @@ resource "aws_apigatewayv2_integration" "nlb_proxy" {
     ignore_changes = [integration_uri]
   }
 }
+
 resource "aws_apigatewayv2_route" "default" {
+  count = var.nlb_listener_arn == "" ? 0 : 1
+
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.nlb_proxy.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.nlb_proxy[0].id}"
 
   authorization_type = "NONE"
 }
