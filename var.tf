@@ -44,7 +44,7 @@ variable "nlb_dns_name" {
 variable "nlb_listener_arn" {
   description = "The ARN of the Network Load Balancer Listener for VPC Link"
   type        = string
-  default     = "arn:aws:elasticloadbalancing:us-east-1:344809605543:listener/net/pending/0000000000000000/0000000000000000"
+  default     = "arn:aws:elasticloadbalancing:us-east-1:344809605543:listener/net/ac81b965afa184b83b4822d34f763502/cb38a1cd417f9401/65651cea8b29a8ad"
 }
 
 # Added for IRSA
