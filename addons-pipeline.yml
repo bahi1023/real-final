@@ -284,6 +284,7 @@ jobs:
           --set extraArgs.provider="oidc" \
           --set extraArgs.oidc-issuer-url="$COGNITO_ISSUER_URL" \
           --set extraArgs.email-domain="gmail.com" \
+          --set extraArgs.logging-level="debug" \
           --set extraArgs.skip-provider-button=true \
           --set extraArgs.upstream="file:///dev/null" \
           --set extraArgs.http-address="0.0.0.0:4180" \
