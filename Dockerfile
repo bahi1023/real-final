@@ -121,13 +121,6 @@ HTML_CONTENT = """<!DOCTYPE html>\n\
 \n\
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):\n\
     def do_GET(self):\n\
-        if self.path != "/":\n\
-            self.send_response(404)\n\
-            self.send_header("Content-type", "text/plain")\n\
-            self.end_headers()\n\
-            self.wfile.write(b"404 Not Found")\n\
-            return\n\
-            \n\
         self.send_response(200)\n\
         self.send_header("Content-type", "text/html")\n\
         self.end_headers()\n\

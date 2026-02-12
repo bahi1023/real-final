@@ -63,12 +63,13 @@ ingress:
   enabled: true
   className: "nginx"
   annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.ingress-nginx.svc.cluster.local/oauth2/auth"
     nginx.ingress.kubernetes.io/auth-signin: "https://l016y2xqz8.execute-api.us-east-1.amazonaws.com/oauth2/start?rd=$escaped_request_uri"
   hosts:
     - host: ""
       paths:
-        - path: /
+        - path: /app
           pathType: Prefix
   tls: []
   #  - secretName: chart-example-tls
