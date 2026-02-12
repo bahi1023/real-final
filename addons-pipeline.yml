@@ -514,14 +514,18 @@ jobs:
           enabled: true
         service:
           type: ClusterIP
-        ingress:
-          enabled: true
-          ingressClassName: nginx
-          hosts:
-            - name: ""
-              path: "/sonarqube"
-          annotations:
-             nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - name: ""
+                paths:
+                  - path: /sonarqube(/|$)(.*)
+                    pathType: Prefix
+            annotations:
+               nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+               nginx.ingress.kubernetes.io/rewrite-target: /$2
+               nginx.ingress.kubernetes.io/use-regex: "true"
         sonarWebContext: /sonarqube
         EOF
 
