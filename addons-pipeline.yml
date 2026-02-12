@@ -480,19 +480,6 @@ jobs:
                     port:
                       number: 80
         INGRESS_EOF
-        
-        echo "Waiting for ArgoCD Redis Secret Init Job..."
-        # Wait up to 5 minutes for the job to complete
-        # if ! kubectl wait --for=condition=complete job/argocd-redis-secret-init -n bahi --timeout=300s; then
-        #     echo "ArgoCD Redis Secret Init Job timed out or failed. Debugging..."
-        #     kubectl get pods -n bahi
-        #     kubectl describe job -n bahi argocd-redis-secret-init || true
-        #     kubectl logs -n bahi -l job-name=argocd-redis-secret-init --tail=100 || true
-        #     # Check for events in the namespace to see pulling errors
-        #     kubectl get events -n bahi --sort-by='.lastTimestamp' | tail -n 20
-        #     exit 1
-        # fi
-        
         echo "ArgoCD Redis Secret Init Job completed successfully."
 
   # 9. Install SonarQube

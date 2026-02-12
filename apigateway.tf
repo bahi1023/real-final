@@ -58,7 +58,7 @@ resource "aws_apigatewayv2_route" "default" {
   count = var.nlb_listener_arn == "" ? 0 : 1
 
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "$default"
+  route_key = "ANY /app"
   target    = "integrations/${aws_apigatewayv2_integration.nlb_proxy[0].id}"
 
   authorization_type = "NONE"

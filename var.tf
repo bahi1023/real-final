@@ -31,7 +31,6 @@ variable "principal_arn" {
 variable "environment" {
   description = "Deployment environment (prod or dev)"
   type        = string
-  default = "prod"
 }
 
 # Added for API Gateway / Two-Pass deployment
