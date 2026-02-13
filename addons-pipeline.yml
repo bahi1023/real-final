@@ -536,3 +536,45 @@ jobs:
             kubectl logs -n bahi -l app=sonarqube --tail=100
             exit 1
         fi
+
+  # 10. Run SonarQube Code Scan
+  - task: AWSShellScript@1
+    displayName: Scan Code with SonarQube
+    inputs:
+      awsCredentials: $(AWS_SERVICE_CONNECTION)
+      regionName: $(AWS_REGION)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        
+        echo "Installing SonarScanner CLI..."
+        
+        # Download and install SonarScanner
+        SONAR_SCANNER_VERSION="6.2.1.4610"
+        wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip
+        unzip -q sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip
+        export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64/bin:$PATH"
+        
+        echo "SonarScanner installed. Version:"
+        sonar-scanner --version
+        
+        # Get API Gateway URL for SonarQube
+        cd "$(TF_DIR)"
+        APIGW_URL=$(terraform output -raw api_gateway_url)
+        SONAR_HOST_URL="${APIGW_URL}/sonarqube"
+        
+        echo "Running SonarQube scan..."
+        echo "SonarQube URL: $SONAR_HOST_URL"
+        
+        # Run the scan on the motivational-app directory
+        cd "$(Build.SourcesDirectory)"
+        
+        sonar-scanner \
+          -Dsonar.projectKey=my-code-scan \
+          -Dsonar.sources=. \
+          -Dsonar.host.url="$SONAR_HOST_URL" \
+          -Dsonar.token=sqp_6959d8B84598182bcde5888f481974316398f4a5b \
+          -Dsonar.python.version=3.9 \
+          -Dsonar.exclusions="**/*.tf,**/*.yaml,**/*.yml,**/*.json,**/*.md,.terraform/**,motivational-app/templates/**"
+        
+        echo "SonarQube scan completed successfully!"
