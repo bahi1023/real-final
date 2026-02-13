@@ -575,6 +575,7 @@ jobs:
           -Dsonar.sources=. \
           -Dsonar.host.url="$SONAR_HOST_URL" \
           -Dsonar.token=sqa_7c376d6f1f442751b1bfc52ac03a03b8e21670f9 \
+          -Dsonar.scanner.skipJreProvisioning=true \
           -Dsonar.python.version=3.9 \
           -Dsonar.exclusions="**/*.tf,**/*.yaml,**/*.yml,**/*.json,**/*.md,.terraform/**,motivational-app/templates/**"
         
