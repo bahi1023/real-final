@@ -559,15 +559,22 @@ jobs:
         echo "SonarScanner installed. Version:"
         sonar-scanner --version
         
-        # Get API Gateway URL for SonarQube
-        cd "$(TF_DIR)"
-        APIGW_URL=$(terraform output -raw api_gateway_url)
-        SONAR_HOST_URL="${APIGW_URL}/sonarqube"
+        # Get Load Balancer DNS (bypasses API Gateway to avoid 413 errors)
+        echo "Getting Load Balancer DNS..."
+        NLB_DNS=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || echo "")
+        
+        if [ -z "$NLB_DNS" ]; then
+          echo "##[error]Could not get Load Balancer DNS. Skipping scan."
+          exit 0
+        fi
+        
+        # Use internal Load Balancer URL instead of API Gateway to avoid 413 errors
+        SONAR_HOST_URL="http://${NLB_DNS}/sonarqube"
         
         echo "Running SonarQube scan..."
-        echo "SonarQube URL: $SONAR_HOST_URL"
+        echo "SonarQube URL (via Load Balancer): $SONAR_HOST_URL"
         
-        # Run the scan on the motivational-app directory
+        # Run the scan
         cd "$(Build.SourcesDirectory)"
         
         sonar-scanner \
