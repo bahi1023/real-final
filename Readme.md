@@ -56,7 +56,7 @@ This project demonstrates a complete DevOps lifecycle implementation, moving fro
    - Provisions VPC, EKS Cluster, Cognito User Pools, and API Gateway using Terraform.
    - Outputs critical infrastructure IDs for subsequent steps.
 
-2. **Addons Pipeline**:
+2. **Platform Pipeline**:
    - Deploys essential cluster addons: Nginx Ingress, Vault, ArgoCD, and SonarQube.
    - Configures integrations between services (e.g., API Gateway $\rightarrow$ NLB).
 
