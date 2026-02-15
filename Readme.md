@@ -13,7 +13,7 @@ This project demonstrates a complete DevOps lifecycle implementation, moving fro
   - **HashiCorp Vault** for secret management and injection.
 - **Quality Assurance**: Automated code quality and security scans with **SonarQube**.
 - **Observability**: Application monitoring and visibility.
-- **Networking**: Ingress management with **Nginx Ingress Controller** and AWS **ALB/NLB**.
+- **Networking**: Ingress management with **Nginx Ingress Controller** and AWS **NLB**.
 
 ## 🏗️ Architecture Stack
 
